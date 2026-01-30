@@ -156,6 +156,34 @@ st.markdown("""
     .status-inactive {
         background-color: #cbd5e0;
     }
+    
+    /* Tags de tipo de problema */
+    .tag-critico {
+        background-color: #fed7d7;
+        color: #9b2c2c;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    
+    .tag-medio {
+        background-color: #feebc8;
+        color: #9c4221;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    
+    .tag-leve {
+        background-color: #c6f6d5;
+        color: #276749;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -176,7 +204,9 @@ class DocumentTypeDetector:
             'nota_fiscal': ['nota fiscal', 'nfe', 'nf-e', 'chave de acesso', 'emitente', 'destinatário',
                            'cnpj', 'icms', 'ipi', 'danfe', 'número da nota', 'modelo 55'],
             'contrato_servico': ['contrato de prestação de serviços', 'contratante', 'contratada', 
-                                'objeto do contrato', 'escopo dos serviços', 'fornecimento de serviços'],
+                                'objeto do contrato', 'escopo dos serviços', 'fornecimento de serviços',
+                                'prestador de serviços', 'tomador de serviços', 'serviços contratados',
+                                'cláusulas do contrato', 'prazo de execução', 'valor dos serviços'],
             'contrato_compra_venda': ['contrato de compra e venda', 'vendedor', 'comprador', 
                                      'alienante', 'adquirente', 'imóvel objeto', 'preço total']
         }
@@ -307,6 +337,192 @@ class NotaFiscalReader:
         return problemas, info
 
 # --------------------------------------------------
+# ANALISADOR DE CONTRATOS DE SERVIÇOS
+# --------------------------------------------------
+
+class ContratoServicoAnalyser:
+    """Analisa contratos de prestação de serviços"""
+    
+    def __init__(self):
+        self.tipo = "contrato_servico"
+        
+        # Regras de auditoria específicas para contratos de serviços
+        self.regras = [
+            {
+                "id": "serv_clausula_aberta",
+                "regex": r"(a criterio|a juizo|exclusivamente|unicamente).*?(contratada|prestador|fornecedor)",
+                "nome": "Cláusula Excessivamente Aberta",
+                "gravidade": "critico",
+                "exp": "Cláusulas que deixam decisões importantes 'a critério' de uma das partes podem ser abusivas.",
+                "lei": "Art. 51, X, Código de Defesa do Consumidor (CDC)"
+            },
+            {
+                "id": "serv_prazo_aberto",
+                "regex": r"(prazo indeterminado|por tempo indeterminado|prazo ilimitado)",
+                "nome": "Prazo Indeterminado",
+                "gravidade": "critico",
+                "exp": "Contratos de serviços não podem ter prazo indeterminado para prestação contínua.",
+                "lei": "Art. 2º, Lei 8.078/90 (CDC)"
+            },
+            {
+                "id": "serv_rescisao_unilateral",
+                "regex": r"(contratada|prestador).*?(resolver|rescisao|rescindir).*?(unilateralmente|por si|sozinha)",
+                "nome": "Rescisão Unilateral para Prestador",
+                "gravidade": "critico",
+                "exp": "Cláusula que permite apenas ao prestador rescindir o contrato unilateralmente é abusiva.",
+                "lei": "Art. 51, IV, CDC"
+            },
+            {
+                "id": "serv_multas_desproporcionais",
+                "regex": r"(multa.*?(100|cem|integral|total).*?valor.*?servico)|(multa.*?superior.*?30.*?por cento)",
+                "nome": "Multas Desproporcionais",
+                "gravidade": "critico",
+                "exp": "Multas superiores a 30% do valor do serviço ou multas integrais são consideradas abusivas.",
+                "lei": "Art. 52, CDC e Súmula 421 STJ"
+            },
+            {
+                "id": "serv_juros_abusivos",
+                "regex": r"(juros.*?(superior|maior|acima).*?(1|2|3).*?por cento.*?mes)|(juros.*?(30|40|50).*?ano)",
+                "nome": "Juros Abusivos",
+                "gravidade": "critico",
+                "exp": "Juros superiores a 1% ao mês (ou 12,68% ao ano) podem ser considerados abusivos em contratos consumeristas.",
+                "lei": "Lei 8.078/90 (CDC) e jurisprudência do STJ"
+            },
+            {
+                "id": "serv_indenizacao_ilimitada",
+                "regex": r"(indenizacao|ressarcimento|responsabilidade).*?(integral|total|ilimitada|sem limite)",
+                "nome": "Responsabilidade Civil Ilimitada",
+                "gravidade": "medio",
+                "exp": "Cláusulas que estabelecem responsabilidade civil ilimitada para o contratante são abusivas.",
+                "lei": "Art. 51, I, CDC"
+            },
+            {
+                "id": "serv_obrigacoes_desproporcionais",
+                "regex": r"(obrigacoes|responsabilidades).*?(desproporcionais|excessivas|desmedidas)",
+                "nome": "Obrigações Desproporcionais",
+                "gravidade": "medio",
+                "exp": "Cláusulas que criam obrigações desproporcionais ao contratante são nulas.",
+                "lei": "Art. 51, IV, CDC"
+            },
+            {
+                "id": "serv_alteracao_unilateral",
+                "regex": r"(alterar|modificar|mudar).*?(unilateralmente|por si|sozinha|a seu criterio).*?(contrato|termos|condicoes)",
+                "nome": "Alteração Unilateral do Contrato",
+                "gravidade": "critico",
+                "exp": "O prestador não pode alterar unilateralmente as condições contratuais.",
+                "lei": "Art. 51, V, CDC"
+            },
+            {
+                "id": "serv_renuncia_direitos",
+                "regex": r"(renuncia|abdicacao|desistencia).*?(direitos|garantias|beneficios).*?(legais|contratuais)",
+                "nome": "Renúncia a Direitos Legais",
+                "gravidade": "critico",
+                "exp": "Cláusula que obriga renúncia a direitos legais é nula de pleno direito.",
+                "lei": "Art. 51, XIV, CDC"
+            },
+            {
+                "id": "serv_foro_inacessivel",
+                "regex": r"(foro|comarca|jurisdicao).*?(municipio|cidade|local).*?(distante|inacessivel|outro estado)",
+                "nome": "Foro de Eleição Inacessível",
+                "gravidade": "medio",
+                "exp": "Cláusula que estabelece foro em local distante da residência do consumidor é abusiva.",
+                "lei": "Art. 51, VII, CDC"
+            },
+            {
+                "id": "serv_objeto_indefinido",
+                "regex": r"(objeto.*?contrato|servicos.*?contratados).*?(vago|indefinido|amplo|generico)",
+                "nome": "Objeto do Contrato Indefinido",
+                "gravidade": "medio",
+                "exp": "O objeto do contrato deve ser claramente especificado, com escopo bem definido.",
+                "lei": "Art. 46, CDC e Art. 112, Código Civil"
+            },
+            {
+                "id": "serv_penhora_salario",
+                "regex": r"(penhora|onera).*?(salario|ordenado|remuneracao|vencimentos)",
+                "nome": "Penhora de Salário",
+                "gravidade": "critico",
+                "exp": "Cláusula que autoriza penhora de salário é abusiva e ilegal.",
+                "lei": "Lei 8.009/90 (Impenhorabilidade do Bem de Família)"
+            },
+            {
+                "id": "serv_confissao_divida",
+                "regex": r"(confissao).*?(divida|debito)",
+                "nome": "Confissão Antecipada de Dívida",
+                "gravidade": "critico",
+                "exp": "Cláusula de confissão de dívida é nula em contratos de adesão.",
+                "lei": "Art. 52, §2º, CDC"
+            }
+        ]
+        
+        # Padrões para extração de informações
+        self.padroes_extracao = {
+            'partes_contratantes': r'(CONTRATANTE|TOMADOR).*?(?::|\n)\s*(.+?)\n',
+            'prestador_servicos': r'(CONTRATADA|PRESTADOR).*?(?::|\n)\s*(.+?)\n',
+            'valor_contrato': r'(VALOR|PREÇO).*?(?::|\n)\s*R?\$?\s*([\d.,]+)',
+            'prazo_execucao': r'(PRAZO.*?EXECUÇÃO|DURAÇÃO.*?SERVIÇOS).*?(?::|\n)\s*(.+?)\n',
+            'objeto_contrato': r'(OBJETO).*?(?::|\n)\s*(.+?)(?:\n|\.)',
+            'forma_pagamento': r'(FORMA.*?PAGAMENTO|PAGAMENTO).*?(?::|\n)\s*(.+?)\n'
+        }
+    
+    def extrair_informacoes_contrato(self, texto):
+        """Extrai informações importantes do contrato"""
+        info = {}
+        
+        for campo, padrao in self.padroes_extracao.items():
+            match = re.search(padrao, texto, re.IGNORECASE | re.MULTILINE)
+            if match:
+                info[campo] = match.group(2).strip()
+            else:
+                info[campo] = None
+        
+        # Extrair cláusulas numeradas
+        clausulas = re.findall(r'CL[ÁA]USULA\s+(\w+)[\.:]\s*(.+?)(?=\nCL[ÁA]USULA|\n\d|\Z)', 
+                              texto, re.IGNORECASE | re.DOTALL)
+        info['total_clausulas'] = len(clausulas)
+        
+        return info
+    
+    def analisar_contrato(self, texto_completo):
+        """Realiza análise completa do contrato de serviços"""
+        problemas = []
+        problemas_ja_encontrados = set()
+        
+        texto_normalizado = normalizar_texto(texto_completo)
+        
+        # Análise por regras
+        for regra in self.regras:
+            matches = list(re.finditer(regra["regex"], texto_normalizado, re.IGNORECASE))
+            
+            if matches:
+                for match in matches:
+                    chave_duplicata = f"{regra['id']}_{match.start()}"
+                    if chave_duplicata not in problemas_ja_encontrados:
+                        inicio = max(0, match.start() - 80)
+                        fim = min(len(texto_normalizado), match.end() + 80)
+                        contexto = texto_normalizado[inicio:fim]
+                        
+                        problema = {
+                            "id": regra["id"],
+                            "nome": regra["nome"],
+                            "gravidade": regra["gravidade"],
+                            "exp": regra["exp"],
+                            "lei": regra["lei"],
+                            "contexto": f"...{contexto}..." if contexto else "",
+                            "pagina": 1  # Em análise simplificada
+                        }
+                        
+                        problemas.append(problema)
+                        problemas_ja_encontrados.add(chave_duplicata)
+        
+        # Ordenar por gravidade (crítico primeiro)
+        problemas.sort(key=lambda x: 0 if x['gravidade'] == 'critico' else 1 if x['gravidade'] == 'medio' else 2)
+        
+        # Extrair informações do contrato
+        info_contrato = self.extrair_informacoes_contrato(texto_completo)
+        
+        return problemas, info_contrato
+
+# --------------------------------------------------
 # FUNÇÕES AUXILIARES
 # --------------------------------------------------
 
@@ -315,6 +531,14 @@ def normalizar_texto(t):
         t = "".join(ch for ch in unicodedata.normalize('NFKD', t) if not unicodedata.combining(ch))
         return " ".join(t.lower().split())
     return ""
+
+def obter_cor_gravidade(gravidade):
+    if gravidade == 'critico':
+        return '#c53030'  # Vermelho
+    elif gravidade == 'medio':
+        return '#d69e2e'  # Amarelo/laranja
+    else:
+        return '#38a169'  # Verde
 
 # --------------------------------------------------
 # LÓGICA DE AUDITORIA PARA CONTRATO DE LOCAÇÃO
@@ -427,6 +651,12 @@ def realizar_auditoria_total(arquivo_pdf):
         st.session_state['informacoes_nf'] = informacoes
         return problemas, tipo_documento
     
+    elif tipo_documento == 'contrato_servico':
+        analisador_servico = ContratoServicoAnalyser()
+        problemas, info_contrato = analisador_servico.analisar_contrato(texto_completo)
+        st.session_state['info_contrato_servico'] = info_contrato
+        return problemas, tipo_documento
+    
     elif tipo_documento == 'desconhecido':
         return [], tipo_documento
     
@@ -451,7 +681,7 @@ with col_upload:
     arquivo = st.file_uploader(
         "Selecione um documento em formato PDF",
         type=["pdf"],
-        help="Documentos suportados: Contratos de locação, Notas Fiscais Eletrônicas"
+        help="Documentos suportados: Contratos de locação, Notas Fiscais Eletrônicas, Contratos de Serviços"
     )
     
     if arquivo:
@@ -522,20 +752,64 @@ if st.session_state.get('analisado', False):
             
             if tipo_doc == 'contrato_locacao':
                 st.markdown("- Área: Direito Imobiliário")
+                st.markdown("- Legislação: Lei 8.245/91 (Lei do Inquilinato)")
             elif tipo_doc == 'nota_fiscal':
                 st.markdown("- Área: Direito Tributário")
+                st.markdown("- Legislação: Legislação Tributária Federal")
+            elif tipo_doc == 'contrato_servico':
+                st.markdown("- Área: Direito Civil e Consumerista")
+                st.markdown("- Legislação: Código Civil e CDC")
+            
+            # Estatísticas por gravidade (para contratos de serviço)
+            if tipo_doc == 'contrato_servico':
+                criticos = sum(1 for a in achados if a.get('gravidade') == 'critico')
+                medios = sum(1 for a in achados if a.get('gravidade') == 'medio')
+                leves = sum(1 for a in achados if a.get('gravidade') == 'leve')
+                
+                if criticos > 0:
+                    st.markdown(f"- <span style='color: #c53030;'>Críticos: {criticos}</span>", unsafe_allow_html=True)
+                if medios > 0:
+                    st.markdown(f"- <span style='color: #d69e2e;'>Médios: {medios}</span>", unsafe_allow_html=True)
+                if leves > 0:
+                    st.markdown(f"- <span style='color: #38a169;'>Leves: {leves}</span>", unsafe_allow_html=True)
             
             st.markdown("</div>", unsafe_allow_html=True)
+            
+            # Informações específicas do contrato (quando aplicável)
+            if tipo_doc == 'contrato_servico' and 'info_contrato_servico' in st.session_state:
+                info = st.session_state['info_contrato_servico']
+                with st.expander("📋 Informações do Contrato"):
+                    if info.get('partes_contratantes'):
+                        st.markdown(f"**Contratante:** {info['partes_contratantes']}")
+                    if info.get('prestador_servicos'):
+                        st.markdown(f"**Prestador:** {info['prestador_servicos']}")
+                    if info.get('valor_contrato'):
+                        st.markdown(f"**Valor:** R$ {info['valor_contrato']}")
+                    if info.get('prazo_execucao'):
+                        st.markdown(f"**Prazo:** {info['prazo_execucao']}")
+                    if info.get('total_clausulas'):
+                        st.markdown(f"**Cláusulas:** {info['total_clausulas']}")
         
         with col_details:
             for a in achados:
-                with st.expander(f"{a['nome']}"):
+                # Determinar estilo baseado na gravidade
+                if a.get('gravidade') == 'critico':
+                    border_color = '#c53030'
+                    tag_html = '<span class="tag-critico">CRÍTICO</span>'
+                elif a.get('gravidade') == 'medio':
+                    border_color = '#d69e2e'
+                    tag_html = '<span class="tag-medio">MÉDIO</span>'
+                else:
+                    border_color = '#38a169'
+                    tag_html = '<span class="tag-leve">LEVE</span>'
+                
+                with st.expander(f"{a['nome']} {tag_html if a.get('gravidade') else ''}", unsafe_allow_html=True):
                     st.markdown(f"**Descrição:** {a['exp']}")
                     st.markdown(f"**Fundamento Legal:** {a.get('lei', 'Não especificado')}")
                     
                     if a.get('contexto'):
                         st.markdown("**Contexto Encontrado:**")
-                        st.markdown(f'<div style="background-color: #f7fafc; padding: 10px; border-radius: 4px; border-left: 3px solid #2c5282; font-size: 14px;">{a["contexto"]}</div>', unsafe_allow_html=True)
+                        st.markdown(f'<div style="background-color: #f7fafc; padding: 10px; border-radius: 4px; border-left: 3px solid {border_color}; font-size: 14px; font-family: monospace;">{a["contexto"]}</div>', unsafe_allow_html=True)
                     
                     st.markdown(f"**Localização:** Página {a.get('pagina', 1)}")
     
@@ -566,6 +840,21 @@ if st.session_state.get('analisado', False):
         elif tipo_doc == 'contrato_locacao':
             st.markdown("✅ O contrato de locação analisado não apresenta irregularidades nas cláusulas verificadas.")
         
+        elif tipo_doc == 'contrato_servico':
+            st.markdown("✅ O contrato de serviços analisado não apresenta irregularidades críticas nas cláusulas verificadas.")
+            
+            if 'info_contrato_servico' in st.session_state:
+                info = st.session_state['info_contrato_servico']
+                with st.expander("📋 Informações do Contrato"):
+                    if info.get('partes_contratantes'):
+                        st.markdown(f"**Contratante:** {info['partes_contratantes']}")
+                    if info.get('prestador_servicos'):
+                        st.markdown(f"**Prestador:** {info['prestador_servicos']}")
+                    if info.get('valor_contrato'):
+                        st.markdown(f"**Valor:** R$ {info['valor_contrato']}")
+                    if info.get('prazo_execucao'):
+                        st.markdown(f"**Prazo:** {info['prazo_execucao']}")
+        
         else:
             st.markdown("✅ O documento analisado não apresenta irregularidades nos padrões verificados.")
         
@@ -590,9 +879,30 @@ with col_console:
         st.markdown(f"[INFO] Tipo de documento: {tipo_doc}")
         st.markdown(f"[INFO] Problemas encontrados: {len(achados)}")
         
+        if tipo_doc == 'contrato_servico':
+            # Estatísticas detalhadas para contratos de serviço
+            criticos = sum(1 for a in achados if a.get('gravidade') == 'critico')
+            medios = sum(1 for a in achados if a.get('gravidade') == 'medio')
+            leves = sum(1 for a in achados if a.get('gravidade') == 'leve')
+            
+            st.markdown(f"[STATS] Críticos: {criticos} | Médios: {medios} | Leves: {leves}")
+            
+            if 'info_contrato_servico' in st.session_state:
+                info = st.session_state['info_contrato_servico']
+                if info.get('total_clausulas'):
+                    st.markdown(f"[INFO] Total de cláusulas identificadas: {info['total_clausulas']}")
+        
         if achados:
             for a in achados:
-                st.markdown(f"[ALERTA] {a['nome']} - Página {a.get('pagina', 1)}")
+                gravidade = a.get('gravidade', 'N/A')
+                if gravidade == 'critico':
+                    prefix = "[ALERTA CRÍTICO]"
+                elif gravidade == 'medio':
+                    prefix = "[ALERTA MÉDIO]"
+                else:
+                    prefix = "[ALERTA]"
+                
+                st.markdown(f"{prefix} {a['nome']} - Página {a.get('pagina', 1)}")
                 st.markdown(f"       Lei: {a.get('lei', 'N/A')}")
         else:
             st.markdown("[INFO] Auditoria concluída sem alertas")
@@ -633,6 +943,18 @@ with col_assist:
                     else:
                         st.markdown("**Orientação:** Para questões contratuais complexas, recomenda-se consulta a advogado especializado em direito imobiliário.")
                 
+                elif tipo_doc == 'contrato_servico':
+                    if any(termo in prompt.lower() for termo in ['multa', 'penalidade']):
+                        st.markdown("**Orientação:** Em contratos de serviços, multas superiores a 30% do valor do contrato podem ser consideradas abusivas (CDC Art. 52).")
+                    elif any(termo in prompt.lower() for termo in ['juros', 'moratória']):
+                        st.markdown("**Orientação:** Juros em contratos consumeristas não devem exceder 1% ao mês. Valores superiores podem ser revisados judicialmente.")
+                    elif any(termo in prompt.lower() for termo in ['rescisão', 'cancelar']):
+                        st.markdown("**Orientação:** Contratos de serviços podem ser rescindidos com 30 dias de antecedência, conforme CDC. Multas devem ser proporcionais.")
+                    elif any(termo in prompt.lower() for termo in ['responsabilidade', 'indenização']):
+                        st.markdown("**Orientação:** Cláusulas de responsabilidade civil ilimitada são nulas em contratos de adesão (CDC Art. 51, I).")
+                    else:
+                        st.markdown("**Orientação:** Para contratos de serviços, atenção especial às cláusulas abusivas listadas no Art. 51 do Código de Defesa do Consumidor.")
+                
                 else:
                     st.markdown("**Orientação:** Recomenda-se análise jurídica especializada para este tipo de documento.")
             else:
@@ -647,20 +969,52 @@ with st.sidebar:
     st.markdown('<p class="sidebar-title">Módulos Disponíveis</p>', unsafe_allow_html=True)
     
     modulos = {
-        "📑 Contratos de Locação": "Análise de 8 cláusulas problemáticas com base na Lei do Inquilinato",
-        "🧾 Notas Fiscais": "Validação de dados fiscais e conformidade tributária",
-        "⚖️ Contratos de Serviços": "Em desenvolvimento",
-        "🏠 Contratos de Compra e Venda": "Em desenvolvimento"
+        "📑 Contratos de Locação": {
+            "status": "ativo",
+            "desc": "Análise de 8 cláusulas problemáticas com base na Lei do Inquilinato",
+            "clausulas": "Reajuste, Benfeitorias, Multa, Privacidade, Garantia, Despejo, Venda, Animais"
+        },
+        "🧾 Notas Fiscais": {
+            "status": "ativo", 
+            "desc": "Validação de dados fiscais e conformidade tributária",
+            "clausulas": "Chave de acesso, CNPJ, Data, Valores"
+        },
+        "⚖️ Contratos de Serviços": {
+            "status": "ativo",
+            "desc": "Análise de 13 cláusulas críticas em contratos de prestação de serviços",
+            "clausulas": "Prazo aberto, Multas, Juros, Responsabilidade, Rescisão, Foro, Renúncia"
+        },
+        "🏠 Contratos de Compra e Venda": {
+            "status": "em_breve",
+            "desc": "Em desenvolvimento - Disponível em breve",
+            "clausulas": ""
+        }
     }
     
-    for modulo, descricao in modulos.items():
-        st.markdown(f"**{modulo}**")
-        st.markdown(f'<div style="font-size: 12px; color: #4a5568; margin-bottom: 15px;">{descricao}</div>', unsafe_allow_html=True)
+    for modulo, info in modulos.items():
+        status_indicator = "🟢" if info["status"] == "ativo" else "🟡"
+        st.markdown(f"{status_indicator} **{modulo}**")
+        st.markdown(f'<div style="font-size: 12px; color: #4a5568; margin-bottom: 10px;">{info["desc"]}</div>', unsafe_allow_html=True)
+        
+        if info.get("clausulas"):
+            with st.expander(f"📋 Cláusulas analisadas"):
+                st.markdown(f'<div style="font-size: 11px; color: #718096;">{info["clausulas"]}</div>', unsafe_allow_html=True)
+    
+    st.markdown("---")
+    
+    st.markdown("**Legenda de Gravidade**")
+    st.markdown("""
+    <div style="font-size: 12px;">
+    <span style="color: #c53030; font-weight: bold;">● Crítico:</span> Cláusula nula ou ilegal<br>
+    <span style="color: #d69e2e; font-weight: bold;">● Médio:</span> Cláusula potencialmente abusiva<br>
+    <span style="color: #38a169; font-weight: bold;">● Leve:</span> Recomendação de ajuste
+    </div>
+    """, unsafe_allow_html=True)
     
     st.markdown("---")
     
     st.markdown("**Informações do Sistema**")
-    st.markdown(f'<div style="font-size: 12px; color: #4a5568;">Versão: 8.0</div>', unsafe_allow_html=True)
+    st.markdown(f'<div style="font-size: 12px; color: #4a5568;">Versão: 9.0</div>', unsafe_allow_html=True)
     st.markdown(f'<div style="font-size: 12px; color: #4a5568;">Última atualização: {datetime.now().strftime("%d/%m/%Y")}</div>', unsafe_allow_html=True)
     
     st.markdown("---")
