@@ -5,6 +5,7 @@ import unicodedata
 from datetime import datetime
 import pandas as pd
 import io
+import base64
 
 # --------------------------------------------------
 # CONFIGURAÇÃO DE LAYOUT PROFISSIONAL
@@ -86,21 +87,6 @@ st.markdown("""
         font-weight: 700;
     }
     
-    /* Botões */
-    .stButton button {
-        background-color: #2c5282;
-        color: white;
-        border: none;
-        padding: 10px 24px;
-        border-radius: 4px;
-        font-weight: 500;
-        transition: background-color 0.3s;
-    }
-    
-    .stButton button:hover {
-        background-color: #1a365d;
-    }
-    
     /* Tags de tipo de problema */
     .tag-critico {
         background-color: #fed7d7;
@@ -130,6 +116,16 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
+
+# --------------------------------------------------
+# INICIALIZAÇÃO DA SESSÃO
+# --------------------------------------------------
+if 'achados' not in st.session_state:
+    st.session_state['achados'] = []
+if 'tipo_doc' not in st.session_state:
+    st.session_state['tipo_doc'] = 'desconhecido'
+if 'analisado' not in st.session_state:
+    st.session_state['analisado'] = False
 
 # --------------------------------------------------
 # SISTEMA DE DETECÇÃO DE TIPO DE DOCUMENTO
@@ -185,8 +181,13 @@ class DocumentTypeDetector:
 
 def normalizar_texto(t):
     if t:
-        t = "".join(ch for ch in unicodedata.normalize('NFKD', t) if not unicodedata.combining(ch))
-        return " ".join(t.lower().split())
+        # Remove acentos e normaliza
+        t = unicodedata.normalize('NFKD', t)
+        t = ''.join([c for c in t if not unicodedata.combining(c)])
+        # Converte para minúsculas e remove espaços extras
+        t = t.lower()
+        t = re.sub(r'\s+', ' ', t)
+        return t.strip()
     return ""
 
 def realizar_auditoria_contrato_locacao(arquivo_pdf):
@@ -196,7 +197,7 @@ def realizar_auditoria_contrato_locacao(arquivo_pdf):
     regras = [
         {
             "id": "readjust", 
-            "regex": r"reajuste.*?(trimestral|mensal|semestral|3|tres|6|seis|bianual|bimestral|4|quarto|quatro)", 
+            "regex": r"reajuste.*?(trimestral|mensal|semestral|3|tres|6|seis|bianual|bimestral|4|quatro)", 
             "nome": "Reajuste Ilegal", 
             "gravidade": "critico",
             "exp": "O reajuste de aluguel deve ser ANUAL (12 meses). Períodos menores são ilegais.", 
@@ -273,10 +274,13 @@ def realizar_auditoria_contrato_locacao(arquivo_pdf):
             
             texto_normalizado = normalizar_texto(texto_completo)
             
+            # DEBUG: Mostrar texto normalizado (opcional)
+            # st.text_area("Texto normalizado", texto_normalizado[:2000], height=200)
+            
             # Verificar cada regra
             for regra in regras:
                 try:
-                    # Usar search ao invés de finditer para primeira ocorrência
+                    # Usar search com flags apropriadas
                     match = re.search(regra["regex"], texto_normalizado, re.IGNORECASE)
                     
                     if match:
@@ -295,6 +299,7 @@ def realizar_auditoria_contrato_locacao(arquivo_pdf):
                         })
                         
                 except Exception as e:
+                    st.warning(f"Erro na regra {regra['id']}: {str(e)}")
                     continue
         
         # Remover duplicatas baseadas no ID
@@ -338,6 +343,10 @@ def realizar_auditoria_total(arquivo_pdf):
             st.warning("Não foi possível extrair texto do PDF. O documento pode estar escaneado como imagem.")
             return [], 'desconhecido'
         
+        # DEBUG: Mostrar primeiras linhas do texto extraído
+        with st.expander("🔍 Ver texto extraído (primeiras 1000 caracteres)"):
+            st.text(texto_completo[:1000])
+        
         # Detectar tipo de documento
         detector = DocumentTypeDetector()
         tipo_documento = detector.detectar_tipo(texto_completo)
@@ -345,7 +354,6 @@ def realizar_auditoria_total(arquivo_pdf):
         # Realizar auditoria específica
         if tipo_documento == 'contrato_locacao':
             # Voltar para o início do arquivo
-            arquivo_pdf.seek(0)
             problemas = realizar_auditoria_contrato_locacao(io.BytesIO(arquivo_bytes))
             return problemas, tipo_documento
         
@@ -359,16 +367,6 @@ def realizar_auditoria_total(arquivo_pdf):
 # --------------------------------------------------
 # FUNÇÕES AUXILIARES
 # --------------------------------------------------
-
-def obter_tag_html(gravidade):
-    if gravidade == 'critico':
-        return '<span class="tag-critico">CRÍTICO</span>'
-    elif gravidade == 'medio':
-        return '<span class="tag-medio">MÉDIO</span>'
-    elif gravidade == 'leve':
-        return '<span class="tag-leve">LEVE</span>'
-    else:
-        return ''
 
 def obter_icone_documento(tipo_doc):
     icones = {
@@ -403,7 +401,7 @@ with col_upload:
     )
     
     if arquivo:
-        if st.button("Iniciar Análise Jurídica", type="primary", use_container_width=True):
+        if st.button("🚀 Iniciar Análise Jurídica", type="primary", use_container_width=True):
             with st.spinner("Realizando análise técnica..."):
                 achados, tipo_doc = realizar_auditoria_total(arquivo)
                 
@@ -464,22 +462,22 @@ if st.session_state.get('analisado', False):
     
     if achados:
         st.markdown("---")
-        st.subheader("Resultados da Auditoria")
+        st.subheader("🔍 Resultados da Auditoria")
         
         # Sumário executivo
         col_summary, col_details = st.columns([1, 2])
         
         with col_summary:
             st.markdown('<div class="info-card">', unsafe_allow_html=True)
-            st.markdown("**Sumário Executivo**")
+            st.markdown("**📊 Sumário Executivo**")
             
             icone = obter_icone_documento(tipo_doc)
-            st.markdown(f"- Tipo: {icone} {tipo_doc.replace('_', ' ').title()}")
-            st.markdown(f"- Total de problemas: {len(achados)}")
+            st.markdown(f"- **Tipo:** {icone} {tipo_doc.replace('_', ' ').title()}")
+            st.markdown(f"- **Total de problemas:** {len(achados)}")
             
             if tipo_doc == 'contrato_locacao':
-                st.markdown("- Área: Direito Imobiliário")
-                st.markdown("- Legislação: Lei 8.245/91 (Lei do Inquilinato)")
+                st.markdown("- **Área:** Direito Imobiliário")
+                st.markdown("- **Legislação:** Lei 8.245/91 (Lei do Inquilinato)")
             
             # Estatísticas por gravidade
             criticos = sum(1 for a in achados if a.get('gravidade') == 'critico')
@@ -487,11 +485,11 @@ if st.session_state.get('analisado', False):
             leves = sum(1 for a in achados if a.get('gravidade') == 'leve')
             
             if criticos > 0:
-                st.markdown(f"- <span style='color: #c53030;'>Críticos: {criticos}</span>", unsafe_allow_html=True)
+                st.markdown(f"- <span style='color: #c53030; font-weight: bold;'>Críticos: {criticos}</span>", unsafe_allow_html=True)
             if medios > 0:
-                st.markdown(f"- <span style='color: #d69e2e;'>Médios: {medios}</span>", unsafe_allow_html=True)
+                st.markdown(f"- <span style='color: #d69e2e; font-weight: bold;'>Médios: {medios}</span>", unsafe_allow_html=True)
             if leves > 0:
-                st.markdown(f"- <span style='color: #38a169;'>Leves: {leves}</span>", unsafe_allow_html=True)
+                st.markdown(f"- <span style='color: #38a169; font-weight: bold;'>Leves: {leves}</span>", unsafe_allow_html=True)
             
             st.markdown("</div>", unsafe_allow_html=True)
         
@@ -501,49 +499,54 @@ if st.session_state.get('analisado', False):
                 if a.get('gravidade') == 'critico':
                     border_color = '#c53030'
                     gravidade_texto = "CRÍTICO"
+                    emoji = "🚨"
                 elif a.get('gravidade') == 'medio':
                     border_color = '#d69e2e'
                     gravidade_texto = "MÉDIO"
+                    emoji = "⚠️"
                 elif a.get('gravidade') == 'leve':
                     border_color = '#38a169'
                     gravidade_texto = "LEVE"
+                    emoji = "ℹ️"
                 else:
                     border_color = '#2c5282'
                     gravidade_texto = ""
+                    emoji = ""
                 
-                # Criar título do expander SEM unsafe_allow_html
+                # Criar título do expander
                 if gravidade_texto:
-                    titulo = f"{a['nome']} ({gravidade_texto})"
+                    titulo = f"{emoji} {a['nome']} ({gravidade_texto})"
                 else:
                     titulo = f"{a['nome']}"
                 
                 with st.expander(titulo):
-                    st.markdown(f"**Descrição:** {a.get('exp', 'Descrição não disponível')}")
-                    st.markdown(f"**Fundamento Legal:** {a.get('lei', 'Não especificado')}")
+                    st.markdown(f"**📝 Descrição:** {a.get('exp', 'Descrição não disponível')}")
+                    st.markdown(f"**⚖️ Fundamento Legal:** {a.get('lei', 'Não especificado')}")
                     
                     if a.get('contexto'):
-                        st.markdown("**Contexto Encontrado:**")
+                        st.markdown("**🔍 Contexto Encontrado:**")
                         st.markdown(f'<div style="background-color: #f7fafc; padding: 10px; border-radius: 4px; border-left: 3px solid {border_color}; font-size: 14px; font-family: monospace;">{a["contexto"]}</div>', unsafe_allow_html=True)
                     
-                    st.markdown(f"**Localização:** Página {a.get('pagina', 1)}")
+                    st.markdown(f"**📍 Localização:** Página {a.get('pagina', 1)}")
     
     else:
         st.markdown("---")
         st.markdown('<div class="analysis-card" style="border-left-color: #38a169;">', unsafe_allow_html=True)
-        st.markdown("**Resultado da Análise**")
+        st.markdown("**✅ Resultado da Análise**")
         
         if tipo_doc == 'contrato_locacao':
-            st.markdown("✅ O contrato de locação analisado não apresenta irregularidades nas cláusulas verificadas.")
             st.markdown("""
+            **🎯 O contrato de locação analisado não apresenta irregularidades nas cláusulas verificadas.**
+            
             **Cláusulas verificadas:**
-            - Reajuste (deve ser anual)
-            - Benfeitorias (não pode haver renúncia)
-            - Multas (devem ser proporcionais)
-            - Privacidade (visitas com aviso)
-            - Garantias (não pode exigir dupla garantia)
-            - Despejo (não pode ser sumário)
-            - Venda (não rescinde automaticamente)
-            - Animais (proibição total pode ser abusiva)
+            - 🚨 **Reajuste** - Deve ser anual (12 meses)
+            - 🚨 **Benfeitorias** - Não pode haver renúncia a indenização
+            - 🚨 **Multas** - Devem ser proporcionais ao tempo restante
+            - ⚠️ **Privacidade** - Visitas apenas com aviso prévio
+            - 🚨 **Garantias** - Não pode exigir fiador E caução
+            - 🚨 **Despejo** - Não pode ser sumário/automático
+            - ⚠️ **Venda** - Não rescinde automaticamente o contrato
+            - ℹ️ **Animais** - Proibição total pode ser considerada abusiva
             """)
         else:
             st.markdown(f"✅ O documento analisado ({tipo_doc.replace('_', ' ').title()}) não apresenta irregularidades nos padrões verificados.")
@@ -551,99 +554,68 @@ if st.session_state.get('analisado', False):
         st.markdown('</div>', unsafe_allow_html=True)
 
 # --------------------------------------------------
-# BOTÃO PARA BAIXAR CONTRATO DE TESTE
+# TEXTO DO CONTRATO DE TESTE PARA COPIAR
 # --------------------------------------------------
 st.markdown("---")
-st.subheader("📄 Contrato de Teste")
+st.subheader("📄 Contrato de Teste (Copie e cole em um editor de texto)")
 
-# Criar um contrato de teste em memória
-from fpdf import FPDF
-import base64
-
-def criar_pdf_contrato_teste():
-    pdf = FPDF()
-    pdf.add_page()
-    
-    # Título
-    pdf.set_font("Arial", 'B', 16)
-    pdf.cell(200, 10, txt="CONTRATO DE LOCAÇÃO RESIDENCIAL", ln=True, align='C')
-    pdf.ln(10)
-    
-    pdf.set_font("Arial", size=12)
-    
-    # Texto do contrato COM ARMAZILHAS
-    texto = """CONTRATO DE LOCAÇÃO RESIDENCIAL
-
-Pelo presente instrumento particular de locação, de um lado, MARIA DA SILVA SANTOS, 
-doravante denominada LOCADORA; e de outro lado, JOÃO PEREIRA OLIVEIRA, 
-doravante denominado LOCATÁRIO, têm entre si justo e acertado o presente 
-contrato de locação:
+contrato_teste = """CONTRATO DE LOCAÇÃO RESIDENCIAL
 
 CLÁUSULA 1 - DO OBJETO
-A LOCADORA dá em locação ao LOCATÁRIO o imóvel residencial situado à 
-Avenida Paulista, 1000, apartamento 101, São Paulo-SP.
+A LOCADORA dá em locação ao LOCATÁRIO o imóvel residencial situado à Avenida Paulista, 1000, apartamento 101, São Paulo-SP.
 
 CLÁUSULA 2 - DO PRAZO
 Contrato com vigência de 30 meses.
 
 CLÁUSULA 3 - DO VALOR DO ALUGUEL
-O aluguel mensal será de R$ 3.000,00. O reajuste será trimestral. 
-[ARMADILHA 1: Reajuste trimestral é ilegal - deve ser anual]
+O aluguel mensal será de R$ 3.000,00. O reajuste será trimestral.
 
 CLÁUSULA 4 - DAS GARANTIAS
-O LOCATÁRIO deverá apresentar fiadores E depósito caução.
-[ARMADILHA 2: Garantia dupla é ilegal - escolha apenas uma]
+O LOCATÁRIO deverá apresentar fiadores com renda comprovada e depósito caução de 3 meses de aluguel.
 
 CLÁUSULA 5 - DAS BENFEITORIAS
-O LOCATÁRIO renuncia a qualquer indenização por benfeitorias necessárias.
-[ARMADILHA 3: Renúncia a benfeitorias é nula]
+O LOCATÁRIO renuncia a qualquer indenização por benfeitorias necessárias realizadas no imóvel.
 
 CLÁUSULA 6 - DAS VISITAS
-A LOCADORA poderá visitar o imóvel a qualquer tempo sem aviso prévio.
-[ARMADILHA 4: Violação de privacidade]
+A LOCADORA poderá visitar o imóvel a qualquer tempo, independentemente de aviso prévio.
 
 CLÁUSULA 7 - DA MULTA
-Multa de 12 meses de aluguel em caso de rescisão.
+Em caso de rescisão antecipada, será devida multa correspondente a 12 meses de aluguel.
 
 CLÁUSULA 8 - DOS ANIMAIS
-Proibida a permanência de animais.
+É vedada a permanência de quaisquer animais de estimação no imóvel.
 
-CLÁUSULA 9 - DA VENDA
-Em caso de venda, contrato rescindido automaticamente.
+CLÁUSULA 9 - DA VENDA DO IMÓVEL
+Em caso de venda do imóvel, o presente contrato estará automaticamente rescindido.
 
 CLÁUSULA 10 - DO FORO
-Foro da Comarca de São Paulo.
+Fica eleito o foro da Comarca de São Paulo.
 
-São Paulo, 15/12/2023
+São Paulo, 15 de dezembro de 2023
+"""
 
-___________________________
-LOCADORA
+st.code(contrato_teste, language="text")
 
-___________________________
-LOCATÁRIO"""
-    
-    for linha in texto.split('\n'):
-        pdf.multi_cell(0, 10, txt=linha)
-    
-    return pdf.output(dest='S').encode('latin1')
+st.markdown("""
+**📋 Instruções para testar:**
+1. Copie o texto acima
+2. Cole em um editor de texto (Bloco de Notas, Word, etc.)
+3. Salve como PDF
+4. Faça upload no sistema
+5. Clique em "Iniciar Análise Jurídica"
 
-# Botão para download do contrato de teste
-if st.button("📥 Baixar Contrato de Locação para Teste (com 4 armadilhas)"):
-    pdf_bytes = criar_pdf_contrato_teste()
-    
-    st.download_button(
-        label="Clique para baixar",
-        data=pdf_bytes,
-        file_name="contrato_locacao_teste.pdf",
-        mime="application/pdf",
-        help="Contrato com 4 armadilhas para testar o sistema"
-    )
+**🔍 Armadilhas que devem ser detectadas:**
+1. 🚨 **Reajuste trimestral** (deve ser anual)
+2. 🚨 **Garantia dupla** (fiador + caução é ilegal)
+3. 🚨 **Renúncia a benfeitorias** (cláusula nula)
+4. ⚠️ **Violação de privacidade** (visitas sem aviso)
+""")
 
 # --------------------------------------------------
 # BARRA LATERAL
 # --------------------------------------------------
 with st.sidebar:
-    st.markdown('<p class="sidebar-title">Módulos Disponíveis</p>', unsafe_allow_html=True)
+    st.markdown('<p class="sidebar-title">🔧 Módulos Disponíveis</p>', unsafe_allow_html=True)
     
     modulos = {
         "🏠 Contratos de Locação": {
@@ -674,23 +646,23 @@ with st.sidebar:
         st.markdown(f'<div style="font-size: 12px; color: #4a5568; margin-bottom: 10px;">{info["desc"]}</div>', unsafe_allow_html=True)
         
         if info.get("clausulas"):
-            with st.expander(f"Cláusulas analisadas"):
+            with st.expander(f"📋 Cláusulas analisadas"):
                 st.markdown(f'<div style="font-size: 11px; color: #718096;">{info["clausulas"]}</div>', unsafe_allow_html=True)
     
     st.markdown("---")
     
-    st.markdown("**Legenda de Gravidade**")
+    st.markdown("**🎯 Legenda de Gravidade**")
     st.markdown("""
     <div style="font-size: 12px;">
-    <span style="color: #c53030; font-weight: bold;">● Crítico:</span> Cláusula nula ou ilegal<br>
-    <span style="color: #d69e2e; font-weight: bold;">● Médio:</span> Cláusula potencialmente abusiva<br>
-    <span style="color: #38a169; font-weight: bold;">● Leve:</span> Recomendação de ajuste
+    <span style="color: #c53030; font-weight: bold;">🚨 Crítico:</span> Cláusula nula ou ilegal<br>
+    <span style="color: #d69e2e; font-weight: bold;">⚠️ Médio:</span> Cláusula potencialmente abusiva<br>
+    <span style="color: #38a169; font-weight: bold;">ℹ️ Leve:</span> Recomendação de ajuste
     </div>
     """, unsafe_allow_html=True)
     
     st.markdown("---")
     
-    st.markdown("**Aviso Legal**")
+    st.markdown("**ℹ️ Aviso Legal**")
     st.markdown("""
     <div style="font-size: 11px; color: #718096;">
     Este sistema fornece análise automática com base em padrões predefinidos. 
@@ -706,6 +678,6 @@ st.markdown("---")
 st.markdown("""
 <div style="text-align: center; color: #718096; font-size: 12px; padding: 20px;">
     Burocrata de Bolso | Sistema de Análise Jurídica de Documentos © 2024<br>
-    Todos os direitos reservados | Processamento realizado localmente
+    Versão 3.0 | Processamento realizado localmente
 </div>
 """, unsafe_allow_html=True)
