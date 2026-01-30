@@ -53,6 +53,19 @@ st.markdown("""
     .medium-card { border-left-color: #f59e0b; }
     .low-card { border-left-color: #10b981; }
     
+    .confidence-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 0.75em;
+        font-weight: 600;
+        margin-left: 8px;
+    }
+    
+    .confidence-high { background: #d1fae5; color: #065f46; }
+    .confidence-medium { background: #fef3c7; color: #92400e; }
+    .confidence-low { background: #fee2e2; color: #991b1b; }
+    
     .upload-container {
         border: 2px dashed #d1d5db;
         border-radius: 12px;
@@ -61,11 +74,6 @@ st.markdown("""
         background: #f8fafc;
         margin: 20px 0;
         transition: all 0.3s;
-    }
-    
-    .upload-container:hover {
-        border-color: #3b82f6;
-        background: #eff6ff;
     }
     
     .stat-badge {
@@ -99,7 +107,6 @@ st.markdown("""
     .score-medium { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
     .score-poor { background: linear-gradient(90deg, #ef4444, #f87171); }
     
-    /* Estilo para títulos com contorno branco */
     .title-with-outline {
         color: white;
         text-shadow: 
@@ -117,158 +124,309 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # --------------------------------------------------
-# SISTEMA DE AUDITORIA AVANÇADO
+# SISTEMA DE AUDITORIA COM ALTA PRECISÃO
 # --------------------------------------------------
 
-class SistemaAuditoriaAvancado:
+class SistemaAuditoriaAltaPrecisao:
     def __init__(self):
-        self.padroes_deteccao = {
+        # Dicionário de sinônimos para melhor detecção
+        self.sinonimos = {
+            'trimestral': ['trimestral', 'a cada 3 meses', '3 meses', 'trimestre', 'trimestralmente'],
+            'mensal': ['mensal', 'a cada mês', 'mensalmente', 'por mês', 'mês a mês'],
+            'semestral': ['semestral', 'a cada 6 meses', '6 meses', 'semestralmente'],
+            'fiador': ['fiador', 'fiadores', 'garantidor', 'avalista', 'fiança'],
+            'caucao': ['caução', 'depósito', 'garantia', 'seguro-fiança', 'caução bancária'],
+            'benfeitoria': ['benfeitoria', 'benfeitorias', 'melhoria', 'reforma', 'obra', 'investimento'],
+            'renuncia': ['renuncia', 'renúncia', 'abdica', 'abre mão', 'desiste', 'desistência'],
+            'visita': ['visita', 'vistoria', 'inspeção', 'verificação', 'fiscalização'],
+            'multa': ['multa', 'penalidade', 'indenização', 'compensação', 'sanção'],
+            'proibido': ['proibido', 'vedado', 'não permitido', 'interditado', 'impedido']
+        }
+        
+        # Configurações de detecção por tipo de problema
+        self.padroes_avancados = {
             'reajuste_ilegal': {
-                'padroes': [
-                    r'reajuste.*?(trimestral|mensal|semestral|bianual|bimestral)',
-                    r'reajuste.*?(a cada|cada).*?(3|4|6).*?(mes|mês)',
-                    r'(trimestral|mensal|semestral).*?reajuste',
-                    r'reajuste.*?periodo.*?(3|4|6).*?meses'
-                ],
                 'nome': 'Reajuste Ilegal',
                 'gravidade': 'critical',
-                'descricao': 'Reajuste deve ser ANUAL (12 meses). Períodos menores são ilegais.',
+                'descricao': 'O reajuste de aluguel deve ser ANUAL (12 meses). Períodos menores são ilegais.',
                 'lei': 'Lei 10.192/01',
-                'icone': '📅'
+                'icone': '📅',
+                'padroes_exatos': [
+                    r'reajuste.*?(trimestral|mensal|semestral|bianual|bimestral)',
+                    r'reajuste.*?(a cada|cada).*?(3|4|6).*?(mes|mês)',
+                    r'reajuste.*?(periodicidade|periodo).*?(3|4|6).*?meses',
+                    r'(trimestral|mensal|semestral).*?reajuste',
+                    r'calculo.*?reajuste.*?(3|4|6).*?meses'
+                ],
+                'contexto_minimo': ['reajuste', 'aluguel', 'valor', 'atualização'],
+                'confianca_minima': 0.7
             },
             'garantia_dupla': {
-                'padroes': [
-                    r'fiador.*?(e|mais|alem|com).*?(caucao|deposito|seguro)',
-                    r'(caucao|deposito|seguro).*?(e|mais|alem|com).*?fiador',
-                    r'exige.*?fiador.*?(caucao|deposito)',
-                    r'fiador.*?caucao.*?simultaneamente',
-                    r'dupla.*?garantia.*?fiador.*?caucao'
-                ],
                 'nome': 'Garantia Dupla Ilegal',
                 'gravidade': 'critical',
-                'descricao': 'É proibido exigir fiador E caução simultaneamente.',
+                'descricao': 'É proibido exigir mais de uma garantia no mesmo contrato (ex: fiador E caução).',
                 'lei': 'Art. 37, Lei 8.245/91',
-                'icone': '🔒'
+                'icone': '🔒',
+                'padroes_exatos': [
+                    r'(fiador|fiadores).*?(e|mais|alem|com|juntamente).*?(caucao|deposito|seguro|garantia)',
+                    r'(caucao|deposito|seguro|garantia).*?(e|mais|alem|com|juntamente).*?(fiador|fiadores)',
+                    r'(exige|requer|necessita).*?(fiador|fiadores).*?(caucao|deposito)',
+                    r'(exige|requer|necessita).*?(caucao|deposito).*?(fiador|fiadores)',
+                    r'dupla.*?garantia.*?(fiador|caucao)',
+                    r'(fiador|fiadores).*?e.*?(caucao|deposito).*?simultaneamente',
+                    r'(fiador|fiadores).*?acompanhado.*?(caucao|deposito)'
+                ],
+                'contexto_minimo': ['garantia', 'fiador', 'caução', 'depósito', 'seguro'],
+                'confianca_minima': 0.8
             },
             'benfeitorias_ilegal': {
-                'padroes': [
-                    r'renuncia.*?(benfeitoria|reforma|obra)',
-                    r'nao.*?(indeniza|recebe|tem direito).*?(benfeitoria|reforma|obra)',
-                    r'sem.*?direito.*?(benfeitoria|reforma|obra)',
-                    r'abre.*?mao.*?(benfeitoria|reforma|obra)',
-                    r'renuncia.*?indenizacao.*?(benfeitoria|reforma)'
-                ],
                 'nome': 'Renúncia Ilegal a Benfeitorias',
                 'gravidade': 'critical',
-                'descricao': 'Inquilino tem direito a indenização por benfeitorias necessárias.',
+                'descricao': 'O inquilino tem direito a indenização por benfeitorias necessárias.',
                 'lei': 'Art. 35, Lei 8.245/91',
-                'icone': '🏗️'
+                'icone': '🏗️',
+                'padroes_exatos': [
+                    r'renuncia.*?(benfeitoria|reforma|obra|melhoria)',
+                    r'(nao|não).*?(indeniza|recebe|tem direito|ressarce).*?(benfeitoria|reforma|obra)',
+                    r'(sem|isento|isenção).*?(direito|indenização).*?(benfeitoria|reforma|obra)',
+                    r'abre.*?mao.*?(benfeitoria|reforma|obra)',
+                    r'renuncia.*?expressamente.*?(benfeitoria|reforma)',
+                    r'(nao|não).*?(haverá|existira).*?indenizacao.*?(benfeitoria|reforma)'
+                ],
+                'contexto_minimo': ['benfeitoria', 'reforma', 'obra', 'indenização', 'direito'],
+                'confianca_minima': 0.75
             },
             'privacidade_violada': {
-                'padroes': [
-                    r'(qualquer|a qualquer|livre).*?(visita|vistoria|ingresso)',
-                    r'sem.*?aviso.*?(visita|vistoria|entrar)',
-                    r'visita.*?sem.*?aviso',
-                    r'vistoria.*?sem.*?aviso',
-                    r'qualquer.*?momento.*?visita'
-                ],
                 'nome': 'Violação de Privacidade',
                 'gravidade': 'medium',
-                'descricao': 'Locador não pode entrar sem aviso prévio e hora combinada.',
+                'descricao': 'O locador não pode entrar no imóvel sem aviso prévio e hora combinada.',
                 'lei': 'Art. 23, IX, Lei 8.245/91',
-                'icone': '👁️'
+                'icone': '👁️',
+                'padroes_exatos': [
+                    r'(qualquer|a qualquer|livre).*?(visita|vistoria|ingresso|acesso)',
+                    r'(sem|dispensa|dispensado).*?(aviso|notificação|comunicação).*?(visita|vistoria|entrar)',
+                    r'visita.*?(sem|dispensa).*?aviso',
+                    r'vistoria.*?(sem|dispensa).*?aviso',
+                    r'(qualquer|a qualquer).*?momento.*?(visita|vistoria)',
+                    r'(livre|irrestrito).*?acesso.*?(visita|vistoria)'
+                ],
+                'contexto_minimo': ['visita', 'vistoria', 'aviso', 'locador', 'entrar'],
+                'confianca_minima': 0.6
             },
             'multa_abusiva': {
-                'padroes': [
-                    r'multa.*?(12|doze).*?meses',
-                    r'(12|doze).*?meses.*?multa',
-                    r'multa.*?integral.*?aluguel',
-                    r'multa.*?total.*?aluguel',
-                    r'pagar.*?(12|doze).*?meses.*?multa',
-                    r'multa.*?correspondente.*?(12|doze).*?meses'
-                ],
                 'nome': 'Multa Abusiva',
                 'gravidade': 'critical',
-                'descricao': 'Multa deve ser proporcional. 12 meses é considerada abusiva.',
+                'descricao': 'A multa deve ser proporcional ao tempo restante. Multa integral de 12 meses é abusiva.',
                 'lei': 'Art. 4º, Lei 8.245/91 e CDC',
-                'icone': '💰'
+                'icone': '💰',
+                'padroes_exatos': [
+                    r'multa.*?(12|doze).*?meses',
+                    r'(12|doze).*?meses.*?multa',
+                    r'multa.*?integral.*?(aluguel|valor)',
+                    r'multa.*?total.*?(aluguel|valor)',
+                    r'multa.*?correspondente.*?(12|doze|integral|total)',
+                    r'pagar.*?(12|doze).*?meses.*?multa',
+                    r'multa.*?equivalente.*?(12|doze).*?meses',
+                    r'(indenizar|compensar).*?(12|doze).*?meses.*?aluguel'
+                ],
+                'contexto_minimo': ['multa', 'rescisão', 'aluguel', 'meses', 'valor'],
+                'confianca_minima': 0.85
             },
             'venda_despeja': {
-                'padroes': [
-                    r'venda.*?(rescindido|rescisao|automaticamente)',
-                    r'alienacao.*?rescindir.*?contrato',
-                    r'venda.*?imovel.*?rescisao.*?automatica'
-                ],
                 'nome': 'Venda Despeja Inquilino',
                 'gravidade': 'medium',
-                'descricao': 'Venda não rescinde automaticamente. Inquilino tem preferência.',
+                'descricao': 'A venda do imóvel não rescinde automaticamente o contrato. Inquilino tem preferência.',
                 'lei': 'Art. 27, Lei 8.245/91',
-                'icone': '🏠'
+                'icone': '🏠',
+                'padroes_exatos': [
+                    r'venda.*?(rescindido|rescisão|terminado|extinto).*?automaticamente',
+                    r'alienação.*?rescindir.*?contrato',
+                    r'venda.*?imovel.*?(rescisão|rescindido).*?automatica',
+                    r'(alienação|transferência).*?determina.*?rescisão',
+                    r'venda.*?acarreta.*?rescisão.*?automatica'
+                ],
+                'contexto_minimo': ['venda', 'alienação', 'rescisão', 'contrato', 'automático'],
+                'confianca_minima': 0.65
             },
             'proibicao_animais': {
-                'padroes': [
-                    r'proibido.*?animais',
-                    r'vedado.*?animais',
-                    r'nao.*?permitido.*?animais',
-                    r'proibicao.*?animais',
-                    r'nao.*?animais.*?estimacao'
-                ],
                 'nome': 'Proibição Total de Animais',
                 'gravidade': 'low',
-                'descricao': 'Proibição total pode ser abusiva. Apenas por justa causa.',
+                'descricao': 'A proibição total de animais pode ser abusiva. Apenas por justa causa.',
                 'lei': 'Art. 51, CDC e Súmula 482 STJ',
-                'icone': '🐕'
+                'icone': '🐕',
+                'padroes_exatos': [
+                    r'proibido.*?animais',
+                    r'vedado.*?animais',
+                    r'(nao|não).*?permitido.*?animais',
+                    r'proibição.*?total.*?animais',
+                    r'(nao|não).*?animais.*?estimação',
+                    r'interdita.*?presença.*?animais'
+                ],
+                'contexto_minimo': ['animais', 'proibido', 'vedado', 'permitido', 'pet'],
+                'confianca_minima': 0.5
             }
         }
+        
+        # Palavras-chave para verificação de contexto
+        self.palavras_chave_contrato = [
+            'contrato', 'locação', 'locador', 'locatário', 'aluguel', 'imóvel',
+            'cláusula', 'vigência', 'obrigações', 'direitos', 'deveres'
+        ]
     
-    def normalizar_texto(self, texto):
-        """Prepara texto para análise"""
+    def preparar_texto_avancado(self, texto):
+        """Prepara texto com técnicas avançadas de normalização"""
         if not texto:
             return ""
         
-        # Remove acentos
+        # 1. Remove acentos e caracteres especiais
         texto = unicodedata.normalize('NFKD', texto)
         texto = ''.join([c for c in texto if not unicodedata.combining(c)])
         
-        # Padroniza
-        texto = texto.lower()
+        # 2. Padroniza espaços e quebras de linha
         texto = re.sub(r'\s+', ' ', texto)
         
-        return texto
-    
-    def analisar_documento(self, texto):
-        """Analisa documento e retorna problemas encontrados"""
-        texto_normalizado = self.normalizar_texto(texto)
-        problemas_encontrados = []
+        # 3. Converte para minúsculas
+        texto = texto.lower()
         
-        for chave, config in self.padroes_deteccao.items():
-            for padrao in config['padroes']:
+        # 4. Expande sinônimos para melhor detecção
+        for palavra, sinonimos in self.sinonimos.items():
+            for sinonimo in sinonimos:
+                texto = texto.replace(sinonimo, palavra)
+        
+        # 5. Remove pontuação excessiva
+        texto = re.sub(r'[^\w\s]', ' ', texto)
+        texto = re.sub(r'\s+', ' ', texto)
+        
+        return texto.strip()
+    
+    def verificar_contexto(self, texto, palavras_contexto, posicao):
+        """Verifica se o contexto ao redor da detecção é relevante"""
+        if not palavras_contexto:
+            return True
+        
+        # Extrair contexto (200 caracteres antes e depois)
+        inicio = max(0, posicao - 200)
+        fim = min(len(texto), posicao + 200)
+        contexto = texto[inicio:fim].lower()
+        
+        # Contar palavras de contexto presentes
+        palavras_encontradas = sum(1 for palavra in palavras_contexto if palavra in contexto)
+        
+        # Retorna True se pelo menos 60% das palavras de contexto estiverem presentes
+        return (palavras_encontradas / len(palavras_contexto)) >= 0.6
+    
+    def calcular_confianca(self, match, contexto_relevante, palavras_chave_encontradas):
+        """Calcula nível de confiança da detecção"""
+        confianca = 0.5  # Base
+        
+        # 1. Comprimento do match (mais longo = mais específico)
+        if len(match.group()) > 15:
+            confianca += 0.2
+        
+        # 2. Contexto relevante
+        if contexto_relevante:
+            confianca += 0.15
+        
+        # 3. Palavras-chave do contrato presentes
+        if palavras_chave_encontradas >= 3:
+            confianca += 0.1
+        elif palavras_chave_encontradas >= 5:
+            confianca += 0.2
+        
+        # 4. Localização no texto (primeiras 1000 palavras = mais importante)
+        if match.start() < 1000:
+            confianca += 0.05
+        
+        return min(confianca, 1.0)
+    
+    def obter_nivel_confianca(self, valor):
+        """Converte valor numérico em nível de confiança"""
+        if valor >= 0.8:
+            return "alta", "confidence-high"
+        elif valor >= 0.6:
+            return "média", "confidence-medium"
+        else:
+            return "baixa", "confidence-low"
+    
+    def analisar_documento_avancado(self, texto):
+        """Análise avançada com múltiplas camadas de verificação"""
+        texto_preparado = self.preparar_texto_avancado(texto)
+        texto_original = texto.lower()
+        
+        # Verificar se é realmente um contrato de locação
+        palavras_contrato_encontradas = sum(1 for palavra in self.palavras_chave_contrato 
+                                          if palavra in texto_original)
+        
+        if palavras_contrato_encontradas < 3:
+            return []  # Provavelmente não é um contrato de locação
+        
+        problemas_detectados = []
+        
+        for chave, config in self.padroes_avancados.items():
+            melhor_match = None
+            melhor_confianca = 0
+            melhor_contexto = ""
+            
+            for padrao in config['padroes_exatos']:
                 try:
-                    if re.search(padrao, texto_normalizado, re.IGNORECASE):
-                        # Extrair contexto
-                        match = re.search(padrao, texto_normalizado, re.IGNORECASE)
-                        inicio = max(0, match.start() - 80)
-                        fim = min(len(texto_normalizado), match.end() + 80)
-                        contexto = texto_normalizado[inicio:fim]
+                    matches = list(re.finditer(padrao, texto_preparado, re.IGNORECASE))
+                    
+                    for match in matches:
+                        # Verificar contexto
+                        contexto_relevante = self.verificar_contexto(
+                            texto_preparado, 
+                            config['contexto_minimo'], 
+                            match.start()
+                        )
                         
-                        problemas_encontrados.append({
-                            'id': chave,
-                            'nome': config['nome'],
-                            'gravidade': config['gravidade'],
-                            'descricao': config['descricao'],
-                            'lei': config['lei'],
-                            'icone': config['icone'],
-                            'contexto': f"...{contexto}..." if contexto else "",
-                            'padrao_usado': padrao
-                        })
-                        break  # Para após encontrar primeiro padrão correspondente
-                except:
+                        # Calcular confiança
+                        confianca = self.calcular_confianca(
+                            match, 
+                            contexto_relevante, 
+                            palavras_contrato_encontradas
+                        )
+                        
+                        # Manter apenas o match com maior confiança
+                        if confianca > melhor_confianca and confianca >= config['confianca_minima']:
+                            melhor_match = match
+                            melhor_confianca = confianca
+                            
+                            # Extrair contexto
+                            inicio = max(0, match.start() - 100)
+                            fim = min(len(texto_preparado), match.end() + 100)
+                            melhor_contexto = texto_preparado[inicio:fim]
+                
+                except Exception as e:
                     continue
+            
+            if melhor_match and melhor_confianca >= config['confianca_minima']:
+                nivel_confianca, classe_confianca = self.obter_nivel_confianca(melhor_confianca)
+                
+                problemas_detectados.append({
+                    'id': chave,
+                    'nome': config['nome'],
+                    'gravidade': config['gravidade'],
+                    'descricao': config['descricao'],
+                    'lei': config['lei'],
+                    'icone': config['icone'],
+                    'contexto': f"...{melhor_contexto}..." if melhor_contexto else "",
+                    'confianca': melhor_confianca,
+                    'nivel_confianca': nivel_confianca,
+                    'classe_confianca': classe_confianca,
+                    'posicao': melhor_match.start()
+                })
         
-        return problemas_encontrados
+        # Ordenar por gravidade e depois por confiança
+        ordem_gravidade = {'critical': 0, 'medium': 1, 'low': 2}
+        problemas_detectados.sort(key=lambda x: (
+            ordem_gravidade.get(x['gravidade'], 3),
+            -x['confianca']  # Confiança decrescente
+        ))
+        
+        return problemas_detectados
     
-    def gerar_metricas(self, problemas):
-        """Gera métricas e estatísticas"""
+    def gerar_metricas_detalhadas(self, problemas):
+        """Gera métricas detalhadas com estatísticas avançadas"""
         total_problemas = len(problemas)
         
         # Contagem por gravidade
@@ -276,14 +434,38 @@ class SistemaAuditoriaAvancado:
         medios = sum(1 for p in problemas if p['gravidade'] == 'medium')
         leves = sum(1 for p in problemas if p['gravidade'] == 'low')
         
-        # Score de conformidade
-        score = max(100 - (criticos * 20 + medios * 10 + leves * 5), 0)
+        # Média de confiança
+        media_confianca = sum(p['confianca'] for p in problemas) / total_problemas if total_problemas > 0 else 0
         
-        # Distribuição por tipo
-        tipos = {}
+        # Distribuição por confiança
+        alta_confianca = sum(1 for p in problemas if p['confianca'] >= 0.8)
+        media_confianca_count = sum(1 for p in problemas if 0.6 <= p['confianca'] < 0.8)
+        baixa_confianca = sum(1 for p in problemas if p['confianca'] < 0.6)
+        
+        # Score de conformidade ponderado por confiança
+        penalidade = 0
         for problema in problemas:
-            tipo = problema['nome']
-            tipos[tipo] = tipos.get(tipo, 0) + 1
+            peso = problema['confianca']  # Ponderar pela confiança
+            
+            if problema['gravidade'] == 'critical':
+                penalidade += 20 * peso
+            elif problema['gravidade'] == 'medium':
+                penalidade += 10 * peso
+            else:
+                penalidade += 5 * peso
+        
+        score = max(100 - penalidade, 0)
+        
+        # Nível de risco ajustado
+        if criticos > 0:
+            if media_confianca > 0.7:
+                nivel_risco = 'ALTO'
+            else:
+                nivel_risco = 'ALTO (confiança moderada)'
+        elif medios > 0:
+            nivel_risco = 'MÉDIO'
+        else:
+            nivel_risco = 'BAIXO'
         
         return {
             'total_problemas': total_problemas,
@@ -291,22 +473,32 @@ class SistemaAuditoriaAvancado:
             'medios': medios,
             'leves': leves,
             'score_conformidade': score,
-            'distribuicao_tipos': tipos,
-            'nivel_risco': 'ALTO' if criticos > 2 else 'MÉDIO' if criticos > 0 else 'BAIXO'
+            'media_confianca': media_confianca,
+            'alta_confianca': alta_confianca,
+            'media_confianca_count': media_confianca_count,
+            'baixa_confianca': baixa_confianca,
+            'nivel_risco': nivel_risco
         }
 
 # --------------------------------------------------
 # FUNÇÕES AUXILIARES
 # --------------------------------------------------
 
-def extrair_texto_pdf(arquivo):
-    """Extrai texto de arquivo PDF"""
+def extrair_texto_pdf_completo(arquivo):
+    """Extrai texto de PDF com tratamento de erros"""
     try:
         with pdfplumber.open(arquivo) as pdf:
             texto_completo = ""
-            for pagina in pdf.pages:
-                conteudo = pagina.extract_text() or ""
-                texto_completo += conteudo + "\n"
+            
+            for i, pagina in enumerate(pdf.pages):
+                try:
+                    conteudo = pagina.extract_text() or ""
+                    
+                    # Adiciona marcador de página
+                    if conteudo.strip():
+                        texto_completo += f"\n[PÁGINA {i+1}]\n{conteudo}\n"
+                except:
+                    continue
             
             if not texto_completo.strip():
                 st.error("❌ O PDF não contém texto extraível. Pode ser uma imagem ou documento protegido.")
@@ -374,10 +566,46 @@ def criar_grafico_score_html(score):
                 #e5e7eb {score}% 100%
             );"></div>
             <div style="position: absolute; top: 20px; left: 20px; width: 160px; height: 160px; border-radius: 50%; background: white; display: flex; align-items: center; justify-content: center; flex-direction: column;">
-                <div style="font-size: 2.5em; font-weight: bold; color: {color};">{score}</div>
+                <div style="font-size: 2.5em; font-weight: bold; color: {color};">{int(score)}</div>
                 <div style="font-size: 1.1em; color: {color}; font-weight: bold;">{status}</div>
                 <div style="font-size: 0.9em; color: #6b7280;">de 100</div>
             </div>
+        </div>
+    </div>
+    """
+    return html
+
+def criar_grafico_confianca_html(metricas):
+    """Cria gráfico de distribuição de confiança"""
+    if metricas['total_problemas'] == 0:
+        return None
+    
+    total = metricas['total_problemas']
+    alta_percent = (metricas['alta_confianca'] / total) * 100 if total > 0 else 0
+    media_percent = (metricas['media_confianca_count'] / total) * 100 if total > 0 else 0
+    baixa_percent = (metricas['baixa_confianca'] / total) * 100 if total > 0 else 0
+    
+    html = f"""
+    <div style="margin: 20px 0;">
+        <h4 style="margin-bottom: 15px; color: #1e3a8a;">📈 Qualidade das Detecções</h4>
+        <div style="display: flex; height: 30px; border-radius: 8px; overflow: hidden; margin-bottom: 10px;">
+            <div style="flex: {metricas['alta_confianca']}; background: #10b981; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 0.9em;">
+                {metricas['alta_confianca']}
+            </div>
+            <div style="flex: {metricas['media_confianca_count']}; background: #f59e0b; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 0.9em;">
+                {metricas['media_confianca_count']}
+            </div>
+            <div style="flex: {metricas['baixa_confianca']}; background: #ef4444; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 0.9em;">
+                {metricas['baixa_confianca']}
+            </div>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 0.9em; color: #6b7280;">
+            <div>✅ Alta: {alta_percent:.1f}%</div>
+            <div>⚠️ Média: {media_percent:.1f}%</div>
+            <div>❌ Baixa: {baixa_percent:.1f}%</div>
+        </div>
+        <div style="margin-top: 10px; font-size: 0.85em; color: #6b7280; text-align: center;">
+            Confiança média: <strong>{metricas['media_confianca']:.1%}</strong>
         </div>
     </div>
     """
@@ -393,18 +621,18 @@ def main():
     <div class="main-header">
         <h1 class="title-with-outline" style="margin: 0; font-size: 2.5em;">⚖️ BUROCRATA DE BOLSO</h1>
         <p style="margin: 10px 0 0 0; font-size: 1.2em; opacity: 0.9; color: white;">Sistema Inteligente de Auditoria Jurídica</p>
-        <p style="margin: 5px 0 0 0; font-size: 0.9em; opacity: 0.7; color: white;">Versão 8.0 - Análise Avançada</p>
+        <p style="margin: 5px 0 0 0; font-size: 0.9em; opacity: 0.7; color: white;">Versão 9.0 - Detecção de Alta Precisão</p>
     </div>
     """, unsafe_allow_html=True)
     
     # Inicializar sistema
-    auditoria = SistemaAuditoriaAvancado()
+    auditoria = SistemaAuditoriaAltaPrecisao()
     
     # Área de upload centralizada
     st.markdown("""
     <div style="text-align: center; margin: 40px 0;">
         <h2 style="color: #1e3a8a;">📤 UPLOAD DO DOCUMENTO</h2>
-        <p style="color: #6b7280; margin-bottom: 20px;">Carregue seu contrato em PDF para análise imediata</p>
+        <p style="color: #6b7280; margin-bottom: 20px;">Carregue seu contrato em PDF para análise avançada</p>
     </div>
     """, unsafe_allow_html=True)
     
@@ -420,14 +648,14 @@ def main():
     
     # Processar se arquivo carregado
     if arquivo:
-        with st.spinner("🔍 Analisando documento com inteligência artificial..."):
+        with st.spinner("🔍 Analisando documento com sistema de alta precisão..."):
             # Extrair texto
-            texto = extrair_texto_pdf(arquivo)
+            texto = extrair_texto_pdf_completo(arquivo)
             
             if texto:
-                # Analisar documento
-                problemas = auditoria.analisar_documento(texto)
-                metricas = auditoria.gerar_metricas(problemas)
+                # Analisar documento com sistema avançado
+                problemas = auditoria.analisar_documento_avancado(texto)
+                metricas = auditoria.gerar_metricas_detalhadas(problemas)
                 
                 # Área de resultados
                 st.markdown("---")
@@ -435,12 +663,12 @@ def main():
                 # Título dos resultados
                 st.markdown(f"""
                 <div style="text-align: center; margin: 30px 0;">
-                    <h2 style="color: #1e3a8a;">📊 RESULTADOS DA ANÁLISE</h2>
+                    <h2 style="color: #1e3a8a;">📊 RESULTADOS DA ANÁLISE AVANÇADA</h2>
                     <p style="color: #6b7280;">Documento: <strong>{arquivo.name}</strong> | {len(texto):,} caracteres analisados</p>
                 </div>
                 """, unsafe_allow_html=True)
                 
-                # Painel de métricas
+                # Painel de métricas principal
                 col1, col2, col3, col4 = st.columns(4)
                 
                 with col1:
@@ -454,240 +682,4 @@ def main():
                 with col2:
                     st.markdown(f"""
                     <div class="metric-card" style="border-top-color: #ef4444;">
-                        <h3 style="margin: 0; color: #dc2626;">{metricas['criticos']}</h3>
-                        <p style="margin: 5px 0 0 0; font-weight: 600;">Críticos</p>
-                    </div>
-                    """, unsafe_allow_html=True)
-                
-                with col3:
-                    st.markdown(f"""
-                    <div class="metric-card" style="border-top-color: #f59e0b;">
-                        <h3 style="margin: 0; color: #d97706;">{metricas['medios']}</h3>
-                        <p style="margin: 5px 0 0 0; font-weight: 600;">Médios</p>
-                    </div>
-                    """, unsafe_allow_html=True)
-                
-                with col4:
-                    st.markdown(f"""
-                    <div class="metric-card" style="border-top-color: #10b981;">
-                        <h3 style="margin: 0; color: #059669;">{metricas['score_conformidade']}/100</h3>
-                        <p style="margin: 5px 0 0 0; font-weight: 600;">Índice de Conformidade</p>
-                    </div>
-                    """, unsafe_allow_html=True)
-                
-                # Gráficos
-                st.markdown("---")
-                st.markdown("### 📈 VISUALIZAÇÕES ANALÍTICAS")
-                
-                if metricas['total_problemas'] > 0:
-                    col_graf1, col_graf2 = st.columns(2)
-                    
-                    with col_graf1:
-                        # Gráfico de score
-                        score_html = criar_grafico_score_html(metricas['score_conformidade'])
-                        if score_html:
-                            st.markdown(score_html, unsafe_allow_html=True)
-                    
-                    with col_graf2:
-                        # Gráfico de distribuição
-                        dist_html = criar_grafico_distribuicao_html(metricas)
-                        if dist_html:
-                            st.markdown(dist_html, unsafe_allow_html=True)
-                
-                # Lista detalhada de problemas
-                st.markdown("---")
-                st.markdown("### 🚨 DETALHAMENTO DOS PROBLEMAS")
-                
-                if problemas:
-                    # Agrupar por gravidade
-                    problemas_criticos = [p for p in problemas if p['gravidade'] == 'critical']
-                    problemas_medios = [p for p in problemas if p['gravidade'] == 'medium']
-                    problemas_leves = [p for p in problemas if p['gravidade'] == 'low']
-                    
-                    # Mostrar problemas críticos
-                    if problemas_criticos:
-                        st.markdown(f"""
-                        <div style="background: #fef2f2; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                            <h4 style="color: #dc2626; margin: 0;">🚨 PROBLEMAS CRÍTICOS ({len(problemas_criticos)})</h4>
-                            <p style="margin: 5px 0 0 0; color: #6b7280;">Requerem atenção imediata antes da assinatura</p>
-                        </div>
-                        """, unsafe_allow_html=True)
-                        
-                        for problema in problemas_criticos:
-                            with st.expander(f"{problema['icone']} {problema['nome']}", expanded=True):
-                                st.markdown(f"**Descrição:** {problema['descricao']}")
-                                st.markdown(f"**Base Legal:** {problema['lei']}")
-                                if problema.get('contexto'):
-                                    st.markdown("**Trecho Encontrado:**")
-                                    st.code(problema['contexto'], language='text')
-                    
-                    # Mostrar problemas médios
-                    if problemas_medios:
-                        st.markdown(f"""
-                        <div style="background: #fffbeb; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                            <h4 style="color: #d97706; margin: 0;">⚠️ PROBLEMAS MÉDIOS ({len(problemas_medios)})</h4>
-                            <p style="margin: 5px 0 0 0; color: #6b7280;">Recomendação de negociação</p>
-                        </div>
-                        """, unsafe_allow_html=True)
-                        
-                        for problema in problemas_medios:
-                            with st.expander(f"{problema['icone']} {problema['nome']}"):
-                                st.markdown(f"**Descrição:** {problema['descricao']}")
-                                st.markdown(f"**Base Legal:** {problema['lei']}")
-                                if problema.get('contexto'):
-                                    st.markdown("**Trecho Encontrado:**")
-                                    st.code(problema['contexto'], language='text')
-                    
-                    # Mostrar problemas leves
-                    if problemas_leves:
-                        st.markdown(f"""
-                        <div style="background: #f0fdf4; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                            <h4 style="color: #059669; margin: 0;">ℹ️ OBSERVAÇÕES ({len(problemas_leves)})</h4>
-                            <p style="margin: 5px 0 0 0; color: #6b7280;">Atenção recomendada</p>
-                        </div>
-                        """, unsafe_allow_html=True)
-                        
-                        for problema in problemas_leves:
-                            with st.expander(f"{problema['icone']} {problema['nome']}"):
-                                st.markdown(f"**Descrição:** {problema['descricao']}")
-                                st.markdown(f"**Base Legal:** {problema['lei']}")
-                                if problema.get('contexto'):
-                                    st.markdown("**Trecho Encontrado:**")
-                                    st.code(problema['contexto'], language='text')
-                    
-                    # Resumo executivo
-                    st.markdown("---")
-                    st.markdown("### 📋 RESUMO EXECUTIVO")
-                    
-                    col_res1, col_res2 = st.columns(2)
-                    
-                    with col_res1:
-                        st.markdown("""
-                        **🎯 RECOMENDAÇÕES:**
-                        
-                        1. **Negociar** cláusulas críticas antes de assinar
-                        2. **Buscar assessoria** jurídica especializada
-                        3. **Documentar** todas as alterações acordadas
-                        4. **Não assinar** sem corrigir irregularidades críticas
-                        """)
-                    
-                    with col_res2:
-                        st.markdown(f"""
-                        **📊 ESTATÍSTICAS:**
-                        
-                        - **Nível de risco:** {metricas['nivel_risco']}
-                        - **Problemas por página:** {metricas['total_problemas']} encontrados
-                        - **Taxa de detecção:** Sistema verifica 7 tipos de cláusulas
-                        - **Confiabilidade:** Baseado em jurisprudência consolidada
-                        """)
-                
-                else:
-                    # Nenhum problema encontrado
-                    st.markdown("""
-                    <div style="text-align: center; padding: 50px; background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); border-radius: 15px; margin: 30px 0;">
-                        <h2 style="color: #065f46; margin: 0 0 15px 0;">✅ CONTRATO REGULAR</h2>
-                        <p style="color: #047857; font-size: 1.1em; margin: 0 0 20px 0;">Nenhuma irregularidade grave detectada nas cláusulas analisadas</p>
-                        <div style="font-size: 3em; margin: 20px 0;">🎉</div>
-                        <p style="color: #059669; font-weight: 600;">Score de Conformidade: """ + str(metricas['score_conformidade']) + """ / 100</p>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    
-                    # Gráfico de score para contratos regulares
-                    score_html = criar_grafico_score_html(metricas['score_conformidade'])
-                    if score_html:
-                        st.markdown(score_html, unsafe_allow_html=True)
-    
-    else:
-        # Tela inicial com estatísticas e informações
-        st.markdown("---")
-        
-        # Estatísticas do sistema
-        st.markdown("### 📊 ESTATÍSTICAS DO SISTEMA")
-        
-        col_stats1, col_stats2, col_stats3, col_stats4 = st.columns(4)
-        
-        with col_stats1:
-            st.markdown("""
-            <div style="text-align: center;">
-                <h3 style="color: #1e3a8a; margin: 0;">7</h3>
-                <p style="margin: 5px 0 0 0;">Tipos de Problemas</p>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        with col_stats2:
-            st.markdown("""
-            <div style="text-align: center;">
-                <h3 style="color: #1e3a8a; margin: 0;">28</h3>
-                <p style="margin: 5px 0 0 0;">Padrões de Detecção</p>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        with col_stats3:
-            st.markdown("""
-            <div style="text-align: center;">
-                <h3 style="color: #1e3a8a; margin: 0;">99%</h3>
-                <p style="margin: 5px 0 0 0;">Precisão</p>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        with col_stats4:
-            st.markdown("""
-            <div style="text-align: center;">
-                <h3 style="color: #1e3a8a; margin: 0;">⚡</h3>
-                <p style="margin: 5px 0 0 0;">Análise Instantânea</p>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        # Tipos de problemas detectáveis
-        st.markdown("---")
-        st.markdown("### 🔍 PROBLEMAS DETECTÁVEIS")
-        
-        tipos_problemas = [
-            {"nome": "Reajuste Ilegal", "icone": "📅", "gravidade": "Crítica", "desc": "Períodos menores que anual"},
-            {"nome": "Garantia Dupla", "icone": "🔒", "gravidade": "Crítica", "desc": "Fiador + caução simultâneos"},
-            {"nome": "Benfeitorias", "icone": "🏗️", "gravidade": "Crítica", "desc": "Renúncia a indenização"},
-            {"nome": "Multa Abusiva", "icone": "💰", "gravidade": "Crítica", "desc": "12 meses ou integral"},
-            {"nome": "Privacidade", "icone": "👁️", "gravidade": "Média", "desc": "Visitas sem aviso"},
-            {"nome": "Venda Despeja", "icone": "🏠", "gravidade": "Média", "desc": "Rescisão automática"},
-            {"nome": "Animais", "icone": "🐕", "gravidade": "Baixa", "desc": "Proibição total"}
-        ]
-        
-        cols = st.columns(4)
-        for i, problema in enumerate(tipos_problemas):
-            with cols[i % 4]:
-                cor_borda = {
-                    "Crítica": "#ef4444",
-                    "Média": "#f59e0b", 
-                    "Baixa": "#10b981"
-                }[problema["gravidade"]]
-                
-                st.markdown(f"""
-                <div style="padding: 15px; border-radius: 8px; border-left: 4px solid {cor_borda}; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 10px;">
-                    <div style="font-size: 1.5em; margin-bottom: 5px;">{problema['icone']}</div>
-                    <h4 style="margin: 0 0 5px 0; font-size: 0.95em; color: #1e3a8a;">{problema['nome']}</h4>
-                    <p style="margin: 0; font-size: 0.85em; color: #6b7280;">{problema['desc']}</p>
-                    <span class="stat-badge {'badge-critical' if problema['gravidade'] == 'Crítica' else 'badge-medium' if problema['gravidade'] == 'Média' else 'badge-low'}" style="margin-top: 8px; display: inline-block;">
-                        {problema['gravidade']}
-                    </span>
-                </div>
-                """, unsafe_allow_html=True)
-
-# --------------------------------------------------
-# RODAPÉ
-# --------------------------------------------------
-st.markdown("""
-<footer style="text-align: center; padding: 30px; margin-top: 50px; color: #6b7280; font-size: 0.9em; border-top: 1px solid #e5e7eb;">
-    <div style="display: flex; justify-content: center; gap: 30px; margin-bottom: 15px; flex-wrap: wrap;">
-        <span>⚖️ Sistema Jurídico</span>
-        <span>🔒 Processamento Local</span>
-        <span>📊 Análise em Tempo Real</span>
-        <span>🎯 Foco em Resultados</span>
-    </div>
-    <p style="margin: 5px 0;">BUROCRATA DE BOLSO v8.0 | Sistema Avançado de Auditoria Contratual © 2024</p>
-    <p style="margin: 5px 0; font-size: 0.85em;"><em>Análise automática. Consulte profissional para orientação jurídica completa.</em></p>
-</footer>
-""", unsafe_allow_html=True)
-
-# Executar aplicação
-if __name__ == "__main__":
-    main()
+                       
