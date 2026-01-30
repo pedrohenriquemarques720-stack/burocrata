@@ -98,6 +98,21 @@ st.markdown("""
     .score-excellent { background: linear-gradient(90deg, #10b981, #34d399); }
     .score-medium { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
     .score-poor { background: linear-gradient(90deg, #ef4444, #f87171); }
+    
+    /* Estilo para títulos com contorno branco */
+    .title-with-outline {
+        color: white;
+        text-shadow: 
+            2px 2px 0 #000,
+            -2px -2px 0 #000,
+            2px -2px 0 #000,
+            -2px 2px 0 #000,
+            0px 2px 0 #000,
+            2px 0px 0 #000,
+            0px -2px 0 #000,
+            -2px 0px 0 #000,
+            2px 2px 5px rgba(0,0,0,0.3);
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -314,7 +329,7 @@ def criar_grafico_distribuicao_html(metricas):
     
     html = f"""
     <div style="margin: 20px 0;">
-        <h4 style="margin-bottom: 15px;">📊 Distribuição por Gravidade</h4>
+        <h4 style="margin-bottom: 15px; color: #1e3a8a;">📊 Distribuição por Gravidade</h4>
         <div style="display: flex; height: 40px; border-radius: 8px; overflow: hidden; margin-bottom: 10px;">
             <div style="flex: {metricas['criticos']}; background: #ef4444; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
                 {metricas['criticos']}
@@ -352,7 +367,7 @@ def criar_grafico_score_html(score):
     
     html = f"""
     <div style="text-align: center; margin: 20px 0;">
-        <h4 style="margin-bottom: 15px;">🎯 Índice de Conformidade</h4>
+        <h4 style="margin-bottom: 15px; color: #1e3a8a;">🎯 Índice de Conformidade</h4>
         <div style="position: relative; margin: 0 auto; width: 200px; height: 200px;">
             <div style="position: absolute; top: 0; left: 0; width: 200px; height: 200px; border-radius: 50%; background: conic-gradient(
                 {color} 0% {score}%,
@@ -368,53 +383,17 @@ def criar_grafico_score_html(score):
     """
     return html
 
-def criar_grafico_tendencia_html(problemas):
-    """Cria gráfico de tendência usando HTML/CSS"""
-    if not problemas:
-        return None
-    
-    # Agrupar por tipo
-    tipos = {}
-    for problema in problemas:
-        nome = problema['nome']
-        tipos[nome] = tipos.get(nome, 0) + 1
-    
-    # Encontrar máximo para escala
-    max_val = max(tipos.values()) if tipos else 1
-    
-    html = """
-    <div style="margin: 20px 0;">
-        <h4 style="margin-bottom: 15px;">📈 Frequência por Tipo de Problema</h4>
-    """
-    
-    for tipo, quantidade in sorted(tipos.items(), key=lambda x: x[1], reverse=True):
-        percentual = (quantidade / max_val) * 100
-        html += f"""
-        <div style="margin-bottom: 10px;">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                <span style="font-size: 0.9em;">{tipo}</span>
-                <span style="font-weight: bold;">{quantidade}</span>
-            </div>
-            <div class="progress-bar-container">
-                <div class="progress-bar-fill" style="width: {percentual}%; background: linear-gradient(90deg, #ef4444, #f87171);"></div>
-            </div>
-        </div>
-        """
-    
-    html += "</div>"
-    return html
-
 # --------------------------------------------------
 # INTERFACE PRINCIPAL
 # --------------------------------------------------
 
 def main():
-    # Cabeçalho profissional
+    # Cabeçalho profissional com contorno branco
     st.markdown("""
     <div class="main-header">
-        <h1 style="margin: 0; font-size: 2.5em;">⚖️ BUROCRATA DE BOLSO</h1>
-        <p style="margin: 10px 0 0 0; font-size: 1.2em; opacity: 0.9;">Sistema Inteligente de Auditoria Jurídica</p>
-        <p style="margin: 5px 0 0 0; font-size: 0.9em; opacity: 0.7;">Versão 8.0 - Análise Avançada</p>
+        <h1 class="title-with-outline" style="margin: 0; font-size: 2.5em;">⚖️ BUROCRATA DE BOLSO</h1>
+        <p style="margin: 10px 0 0 0; font-size: 1.2em; opacity: 0.9; color: white;">Sistema Inteligente de Auditoria Jurídica</p>
+        <p style="margin: 5px 0 0 0; font-size: 0.9em; opacity: 0.7; color: white;">Versão 8.0 - Análise Avançada</p>
     </div>
     """, unsafe_allow_html=True)
     
@@ -424,7 +403,7 @@ def main():
     # Área de upload centralizada
     st.markdown("""
     <div style="text-align: center; margin: 40px 0;">
-        <h2>📤 UPLOAD DO DOCUMENTO</h2>
+        <h2 style="color: #1e3a8a;">📤 UPLOAD DO DOCUMENTO</h2>
         <p style="color: #6b7280; margin-bottom: 20px;">Carregue seu contrato em PDF para análise imediata</p>
     </div>
     """, unsafe_allow_html=True)
@@ -456,7 +435,7 @@ def main():
                 # Título dos resultados
                 st.markdown(f"""
                 <div style="text-align: center; margin: 30px 0;">
-                    <h2>📊 RESULTADOS DA ANÁLISE</h2>
+                    <h2 style="color: #1e3a8a;">📊 RESULTADOS DA ANÁLISE</h2>
                     <p style="color: #6b7280;">Documento: <strong>{arquivo.name}</strong> | {len(texto):,} caracteres analisados</p>
                 </div>
                 """, unsafe_allow_html=True)
@@ -514,12 +493,6 @@ def main():
                         dist_html = criar_grafico_distribuicao_html(metricas)
                         if dist_html:
                             st.markdown(dist_html, unsafe_allow_html=True)
-                    
-                    # Gráfico de tendência
-                    tend_html = criar_grafico_tendencia_html(problemas)
-                    if tend_html:
-                        st.markdown("### 📋 Distribuição Detalhada")
-                        st.markdown(tend_html, unsafe_allow_html=True)
                 
                 # Lista detalhada de problemas
                 st.markdown("---")
@@ -691,7 +664,7 @@ def main():
                 st.markdown(f"""
                 <div style="padding: 15px; border-radius: 8px; border-left: 4px solid {cor_borda}; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 10px;">
                     <div style="font-size: 1.5em; margin-bottom: 5px;">{problema['icone']}</div>
-                    <h4 style="margin: 0 0 5px 0; font-size: 0.95em;">{problema['nome']}</h4>
+                    <h4 style="margin: 0 0 5px 0; font-size: 0.95em; color: #1e3a8a;">{problema['nome']}</h4>
                     <p style="margin: 0; font-size: 0.85em; color: #6b7280;">{problema['desc']}</p>
                     <span class="stat-badge {'badge-critical' if problema['gravidade'] == 'Crítica' else 'badge-medium' if problema['gravidade'] == 'Média' else 'badge-low'}" style="margin-top: 8px; display: inline-block;">
                         {problema['gravidade']}
