@@ -65,9 +65,9 @@ st.markdown("""
     /* Cartões de problemas - design simplificado */
     .problem-card {
         background: rgba(20, 20, 20, 0.9);
-        padding: 25px;
+        padding: 20px;
         border-radius: 15px;
-        margin: 20px 0;
+        margin: 15px 0;
         box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
         border-left: 5px solid;
         transition: all 0.3s ease;
@@ -86,9 +86,11 @@ st.markdown("""
     /* Ícones dourados */
     .gold-icon {
         color: #d4af37;
-        font-size: 1.8em;
-        margin-right: 15px;
+        font-size: 2.5em;
+        margin-right: 20px;
         text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+        min-width: 60px;
+        text-align: center;
     }
     
     /* Badges de gravidade */
@@ -151,54 +153,6 @@ st.markdown("""
         border-color: #e6c158;
     }
     
-    /* Barra de progresso customizada */
-    .progress-bar-container {
-        height: 12px;
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 6px;
-        margin: 15px 0;
-        overflow: hidden;
-        border: 1px solid rgba(212, 175, 55, 0.3);
-    }
-    
-    .progress-bar-fill {
-        height: 100%;
-        border-radius: 6px;
-        transition: width 0.5s ease;
-    }
-    
-    /* Score circular */
-    .score-circle {
-        position: relative;
-        width: 180px;
-        height: 180px;
-        margin: 0 auto;
-    }
-    
-    .score-fill {
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        border-radius: 50%;
-        background: conic-gradient(#d4af37 0%, transparent 0%);
-        transition: all 1s ease;
-    }
-    
-    .score-inner {
-        position: absolute;
-        top: 15px;
-        left: 15px;
-        width: 150px;
-        height: 150px;
-        border-radius: 50%;
-        background: #000000;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-direction: column;
-        border: 2px solid #d4af37;
-    }
-    
     /* Botões dourados */
     .gold-button {
         background: linear-gradient(135deg, #d4af37, #b8941f);
@@ -227,26 +181,61 @@ st.markdown("""
         margin: 40px 0;
     }
     
-    /* Tooltip legal */
-    .law-tooltip {
-        background: rgba(212, 175, 55, 0.1);
-        border-left: 3px solid #d4af37;
-        padding: 15px;
-        margin: 15px 0;
-        border-radius: 8px;
-        font-style: italic;
-    }
-    
-    /* Contexto destacado */
-    .context-box {
-        background: rgba(40, 40, 40, 0.9);
+    /* Container expansível */
+    .expandable-container {
+        background: rgba(40, 40, 40, 0.7);
         border: 1px solid rgba(212, 175, 55, 0.3);
         border-radius: 10px;
-        padding: 15px;
         margin: 15px 0;
-        font-family: 'Courier New', monospace;
-        font-size: 0.9em;
-        line-height: 1.5;
+        overflow: hidden;
+    }
+    
+    .expandable-header {
+        padding: 15px 20px;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: rgba(30, 30, 30, 0.9);
+        transition: background 0.3s;
+    }
+    
+    .expandable-header:hover {
+        background: rgba(50, 50, 50, 0.9);
+    }
+    
+    .expandable-content {
+        padding: 0;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.5s ease, padding 0.5s ease;
+    }
+    
+    .expandable-content.expanded {
+        padding: 20px;
+        max-height: 1000px;
+    }
+    
+    /* Detalhes do problema */
+    .problem-detail {
+        padding: 15px;
+        margin: 10px 0;
+        border-radius: 8px;
+    }
+    
+    .violation-detail {
+        background: rgba(255, 68, 68, 0.1);
+        border-left: 3px solid #ff4444;
+    }
+    
+    .article-detail {
+        background: rgba(212, 175, 55, 0.1);
+        border-left: 3px solid #d4af37;
+    }
+    
+    .contestation-detail {
+        background: rgba(0, 255, 0, 0.1);
+        border-left: 3px solid #00ff00;
     }
     
     /* Status do sistema */
@@ -267,7 +256,11 @@ st.markdown("""
             margin-bottom: 20px;
         }
         .problem-card {
-            padding: 20px;
+            padding: 15px;
+        }
+        .gold-icon {
+            font-size: 2em;
+            min-width: 50px;
         }
     }
     
@@ -297,6 +290,17 @@ st.markdown("""
     
     ::-webkit-scrollbar-thumb:hover {
         background: #e6c158;
+    }
+    
+    /* Toggle chevron */
+    .toggle-chevron {
+        transition: transform 0.3s ease;
+        color: #d4af37;
+        font-size: 1.2em;
+    }
+    
+    .toggle-chevron.expanded {
+        transform: rotate(180deg);
     }
 </style>
 """, unsafe_allow_html=True)
@@ -330,8 +334,7 @@ class SistemaAuditoriaAltaPrecisao:
                 'descricao_detalhada': 'A lei permite reajuste de aluguel apenas uma vez por ano (12 meses). Qualquer período menor como trimestral (3 meses) ou semestral (6 meses) é PROIBIDO.',
                 'lei': 'Lei 10.192/01',
                 'icone': '📅',
-                'explicacao_simples': 'Imagine que seu aluguel sobe a cada 3 meses. Isso é como tomar um choque de realidade todo trimestre! A lei protege você disso.',
-                'recomendacao': 'Exija que o reajuste seja ANUAL e baseado em índice oficial como IPCA ou IGP-M.',
+                'contestacao': 'Exija que o reajuste seja ANUAL e baseado em índice oficial como IPCA ou IGP-M.',
                 'cor': '#ff4444'
             },
             'garantia_dupla': {
@@ -341,8 +344,7 @@ class SistemaAuditoriaAltaPrecisao:
                 'descricao_detalhada': 'O proprietário não pode exigir FIADOR e CAUÇÃO ao mesmo tempo. Você escolhe UMA forma de garantia.',
                 'lei': 'Art. 37, Lei 8.245/91',
                 'icone': '🔒',
-                'explicacao_simples': 'É como pedir para você trazer dois guarda-chuvas em um dia de sol. Um já basta! A lei diz que o proprietário deve aceitar apenas UMA garantia.',
-                'recomendacao': 'Escolha entre fiador OU caução. Não aceite as duas coisas.',
+                'contestacao': 'Escolha entre fiador OU caução. Não aceite as duas coisas.',
                 'cor': '#ff4444'
             },
             'benfeitorias_ilegal': {
@@ -352,8 +354,7 @@ class SistemaAuditoriaAltaPrecisao:
                 'descricao_detalhada': 'Se você pagou um conserto necessário (ex: cano estourado, telhado vazando), tem direito a receber de volta ou descontar do aluguel.',
                 'lei': 'Art. 35, Lei 8.245/91',
                 'icone': '🏗️',
-                'explicacao_simples': 'Você conserta algo quebrado na casa e o dono diz "isso é seu dever". Não é! Gastos necessários devem ser ressarcidos.',
-                'recomendacao': 'Nunca assine cláusula que renuncie a este direito. Guarde todas as notas fiscais de consertos.',
+                'contestacao': 'Nunca assine cláusula que renuncie a este direito. Guarde todas as notas fiscais de consertos.',
                 'cor': '#ff4444'
             },
             'privacidade_violada': {
@@ -363,8 +364,7 @@ class SistemaAuditoriaAltaPrecisao:
                 'descricao_detalhada': 'O dono do imóvel precisa combinar dia e hora para visitas. Não pode entrar "a qualquer momento" ou "sem aviso prévio".',
                 'lei': 'Art. 23, IX, Lei 8.245/91',
                 'icone': '👁️',
-                'explicacao_simples': 'Sua casa é seu castelo! O proprietário não pode aparecer de surpresa como se fosse dono da sua privacidade.',
-                'recomendacao': 'Exija que todas as visitas sejam agendadas com pelo menos 24h de antecedência.',
+                'contestacao': 'Exija que todas as visitas sejam agendadas com pelo menos 24h de antecedência.',
                 'cor': '#ffaa44'
             },
             'multa_abusiva': {
@@ -374,8 +374,7 @@ class SistemaAuditoriaAltaPrecisao:
                 'descricao_detalhada': 'A multa por quebra de contrato deve ser proporcional ao tempo que falta. Multa integral de 12 meses é considerada ABUSIVA.',
                 'lei': 'Art. 4º, Lei 8.245/91 e CDC',
                 'icone': '💰',
-                'explicacao_simples': 'Pagar 12 meses de aluguel por sair antes é como comprar um carro e ter que pagar por todos os carros da loja! A multa deve ser justa.',
-                'recomendacao': 'Negocie multa proporcional: 3 meses se faltar muito tempo, menos se faltar pouco.',
+                'contestacao': 'Negocie multa proporcional: 3 meses se faltar muito tempo, menos se faltar pouco.',
                 'cor': '#ff4444'
             },
             'venda_despeja': {
@@ -385,8 +384,7 @@ class SistemaAuditoriaAltaPrecisao:
                 'descricao_detalhada': 'Se o proprietário vender a casa, você NÃO precisa sair imediatamente. Tem direito a 90 dias para se organizar e preferência na compra.',
                 'lei': 'Art. 27, Lei 8.245/91',
                 'icone': '🏠',
-                'explicacao_simples': 'O dono vendeu? Você não vira sem-teto! O contrato continua válido com o novo dono e você tem tempo para se preparar.',
-                'recomendacao': 'Não aceite cláusula que diga que venda automaticamente cancela o contrato.',
+                'contestacao': 'Não aceite cláusula que diga que venda automaticamente cancela o contrato.',
                 'cor': '#ffaa44'
             },
             'proibicao_animais': {
@@ -396,8 +394,7 @@ class SistemaAuditoriaAltaPrecisao:
                 'descricao_detalhada': 'Proibição total de animais domésticos pode ser considerada abusiva. Apenas pode proibir se houver justa causa (ex: animal perigoso).',
                 'lei': 'Art. 51, CDC e Súmula 482 STJ',
                 'icone': '🐕',
-                'explicacao_simples': 'Seu pet é da família! Proibir totalmente é como dizer que você não pode ter uma foto da sua mãe na parede.',
-                'recomendacao': 'Se tiver animal, negocie essa cláusula. Ofereça garantias de bom comportamento.',
+                'contestacao': 'Se tiver animal, negocie essa cláusula. Ofereça garantias de bom comportamento.',
                 'cor': '#44aaff'
             }
         }
@@ -583,8 +580,7 @@ class SistemaAuditoriaAltaPrecisao:
                     'descricao_detalhada': config['descricao_detalhada'],
                     'lei': config['lei'],
                     'icone': config['icone'],
-                    'explicacao_simples': config['explicacao_simples'],
-                    'recomendacao': config['recomendacao'],
+                    'contestacao': config['contestacao'],
                     'contexto': f"...{melhor_contexto}..." if melhor_contexto else "",
                     'confianca': melhor_confianca,
                     'nivel_confianca': nivel_confianca,
@@ -784,7 +780,7 @@ def main():
                 # Divisor
                 st.markdown('<hr class="gold-divider">', unsafe_allow_html=True)
                 
-                # Lista de problemas detectados - DESIGN SIMPLIFICADO
+                # Lista de problemas detectados - DESIGN MINIMALISTA
                 st.markdown(f"""
                 <div style="text-align: center; margin: 40px 0;">
                     <h2 style="color: #d4af37; font-size: 2.2em;">🔍 PROBLEMAS IDENTIFICADOS</h2>
@@ -816,63 +812,117 @@ def main():
                             'low': 'ℹ️ INFORMATIVO'
                         }.get(problema['gravidade'], 'ℹ️ INFORMATIVO')
                         
-                        # Exibir problema de forma SIMPLES e DIRETA
+                        # Criar um identificador único para o expandable
+                        expandable_id = f"expandable_{i}"
+                        
+                        # Usar session state para controlar o estado de expansão
+                        if expandable_id not in st.session_state:
+                            st.session_state[expandable_id] = False
+                        
+                        # Exibir problema de forma MINIMALISTA
                         st.markdown(f"""
                         <div class="problem-card {classe_css} fade-in">
-                            <div style="display: flex; align-items: flex-start; margin-bottom: 20px;">
+                            <div style="display: flex; align-items: center; margin-bottom: 15px;">
                                 <div class="gold-icon">{problema['icone']}</div>
                                 <div style="flex: 1;">
-                                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                                    <div style="display: flex; align-items: center; justify-content: space-between;">
                                         <h3 style="margin: 0; color: #ffffff; font-size: 1.4em;">{problema['nome']}</h3>
                                         <span class="severity-badge {badge_gravidade}">{texto_gravidade}</span>
                                     </div>
-                                    
-                                    <div style="background: rgba(40, 40, 40, 0.7); padding: 15px; border-radius: 10px; margin: 15px 0;">
-                                        <h4 style="margin: 0 0 10px 0; color: #d4af37; font-size: 1.1em;">❌ O QUE ESTÁ ERRADO:</h4>
-                                        <p style="margin: 0; color: #ffffff; line-height: 1.6;">
-                                            {problema['descricao_detalhada']}
-                                        </p>
+                                    <div style="margin-top: 10px; color: #cccccc; font-size: 1.1em;">
+                                        {problema['descricao_curta']}
                                     </div>
-                                    
-                                    <div style="background: rgba(212, 175, 55, 0.1); padding: 15px; border-radius: 10px; margin: 15px 0; border-left: 3px solid #d4af37;">
-                                        <h4 style="margin: 0 0 10px 0; color: #d4af37; font-size: 1.1em;">💡 EM LINGUAGEM SIMPLES:</h4>
-                                        <p style="margin: 0; color: #ffffff; line-height: 1.6; font-style: italic;">
-                                            "{problema['explicacao_simples']}"
-                                        </p>
+                                </div>
+                            </div>
+                            
+                            <div class="expandable-container" id="{expandable_id}_container">
+                                <div class="expandable-header" onclick="toggleExpandable('{expandable_id}')">
+                                    <div style="display: flex; align-items: center;">
+                                        <span style="color: #d4af37; font-weight: bold; font-size: 1.1em;">
+                                            📋 VER DETALHES DA VIOLAÇÃO
+                                        </span>
                                     </div>
-                                    
-                                    <div style="display: flex; justify-content: space-between; margin-top: 20px;">
-                                        <div>
-                                            <span style="color: #d4af37; font-weight: bold;">📚 Base Legal:</span>
-                                            <span style="color: #ffffff; margin-left: 10px;">{problema['lei']}</span>
+                                    <div class="toggle-chevron" id="{expandable_id}_chevron">▼</div>
+                                </div>
+                                <div class="expandable-content" id="{expandable_id}_content">
+                                    <div style="padding: 20px;">
+                                        <div class="problem-detail violation-detail">
+                                            <h4 style="margin: 0 0 10px 0; color: #ff4444;">❌ VIOLAÇÃO DETECTADA</h4>
+                                            <p style="margin: 0; color: #ffffff; line-height: 1.6;">
+                                                {problema['descricao_detalhada']}
+                                            </p>
                                         </div>
-                                        <div>
-                                            <span style="color: #d4af37; font-weight: bold;">🎯 Confiança:</span>
-                                            <span style="color: {problema['cor_confianca']}; margin-left: 10px; font-weight: bold;">
-                                                {problema['nivel_confianca']} ({problema['confianca']:.0%})
-                                            </span>
+                                        
+                                        <div class="problem-detail article-detail">
+                                            <h4 style="margin: 0 0 10px 0; color: #d4af37;">⚖️ ARTIGO DA LEI</h4>
+                                            <p style="margin: 0; color: #ffffff; line-height: 1.6; font-weight: bold;">
+                                                {problema['lei']}
+                                            </p>
                                         </div>
-                                    </div>
-                                    
-                                    <div style="background: rgba(0, 100, 0, 0.2); padding: 15px; border-radius: 10px; margin-top: 20px; border: 1px solid #00aa00;">
-                                        <h4 style="margin: 0 0 10px 0; color: #00ff00; font-size: 1.1em;">✅ O QUE FAZER AGORA:</h4>
-                                        <p style="margin: 0; color: #ffffff; line-height: 1.6; font-weight: bold;">
-                                            {problema['recomendacao']}
-                                        </p>
-                                    </div>
-                                    
-                                    <div style="margin-top: 20px; padding-top: 15px; border-top: 1px dashed rgba(212, 175, 55, 0.3);">
-                                        <p style="margin: 0; color: #999999; font-size: 0.9em;">
-                                            <strong>Trecho encontrado no contrato:</strong><br>
-                                            <span style="color: #cccccc; font-family: monospace; font-size: 0.9em;">
-                                                {problema['contexto'][:300]}...
-                                            </span>
-                                        </p>
+                                        
+                                        <div class="problem-detail contestation-detail">
+                                            <h4 style="margin: 0 0 10px 0; color: #00ff00;">✅ COMO CONTESTAR</h4>
+                                            <p style="margin: 0; color: #ffffff; line-height: 1.6;">
+                                                {problema['contestacao']}
+                                            </p>
+                                        </div>
+                                        
+                                        <div style="margin-top: 20px; padding-top: 15px; border-top: 1px dashed rgba(212, 175, 55, 0.3);">
+                                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                                <div>
+                                                    <span style="color: #d4af37; font-weight: bold;">🎯 Confiança da detecção:</span>
+                                                    <span style="color: {problema['cor_confianca']}; margin-left: 10px; font-weight: bold;">
+                                                        {problema['nivel_confianca']} ({problema['confianca']:.0%})
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            
+                                            <div style="margin-top: 15px; background: rgba(30, 30, 30, 0.8); padding: 12px; border-radius: 8px;">
+                                                <p style="margin: 0; color: #999999; font-size: 0.9em;">
+                                                    <strong>Trecho encontrado no contrato:</strong><br>
+                                                    <span style="color: #cccccc; font-family: monospace; font-size: 0.9em;">
+                                                        {problema['contexto'][:250]}...
+                                                    </span>
+                                                </p>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         """, unsafe_allow_html=True)
+                        
+                        # JavaScript para controlar o expandable
+                        st.markdown(f"""
+                        <script>
+                        function toggleExpandable(id) {{
+                            const content = document.getElementById(id + '_content');
+                            const chevron = document.getElementById(id + '_chevron');
+                            
+                            if (content.classList.contains('expanded')) {{
+                                content.classList.remove('expanded');
+                                chevron.classList.remove('expanded');
+                            }} else {{
+                                content.classList.add('expanded');
+                                chevron.classList.add('expanded');
+                            }}
+                        }}
+                        
+                        // Inicializar estado baseado no session state
+                        if ({'true' if st.session_state[expandable_id] else 'false'}) {{
+                            document.getElementById('{expandable_id}_content').classList.add('expanded');
+                            document.getElementById('{expandable_id}_chevron').classList.add('expanded');
+                        }}
+                        </script>
+                        """, unsafe_allow_html=True)
+                        
+                        # Adicionar botão de expansão via Streamlit também
+                        col1, col2 = st.columns([6, 1])
+                        with col2:
+                            if st.button("📋 Detalhes", key=f"btn_{i}"):
+                                st.session_state[expandable_id] = not st.session_state[expandable_id]
+                                st.rerun()
+                        st.markdown("---")
                 else:
                     # Mensagem quando nenhum problema é encontrado
                     st.markdown("""
@@ -908,8 +958,8 @@ def main():
                             'Problema': p['nome'],
                             'Gravidade': p['gravidade'].upper(),
                             'Descrição': p['descricao_detalhada'],
-                            'Recomendação': p['recomendacao'],
-                            'Base Legal': p['lei'],
+                            'Artigo da Lei': p['lei'],
+                            'Como Contestar': p['contestacao'],
                             'Confiança': f"{p['confianca']:.1%}"
                         })
                     
@@ -951,71 +1001,18 @@ def main():
         # Divisor
         st.markdown('<hr class="gold-divider">', unsafe_allow_html=True)
         
-        # O que o sistema detecta
-        st.markdown("""
-        <div style="text-align: center; margin: 50px 0;">
-            <h2 style="color: #d4af37; font-size: 2em;">🎯 O QUE ANALISAMOS?</h2>
-            <p style="color: #cccccc; font-size: 1.1em; max-width: 800px; margin: 20px auto;">
-                Nosso sistema inteligente identifica automaticamente as cláusulas mais problemáticas
-                em contratos de aluguel
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # Exemplos de problemas em colunas
-        col1, col2, col3 = st.columns(3)
-        
-        with col1:
-            st.markdown("""
-            <div style="padding: 25px; background: rgba(26, 26, 26, 0.9); border-radius: 15px; text-align: center; height: 100%; border: 1px solid rgba(212, 175, 55, 0.3);">
-                <div style="font-size: 2.5em; margin-bottom: 15px;">🚨</div>
-                <h4 style="color: #ff4444; margin: 10px 0;">PROBLEMAS CRÍTICOS</h4>
-                <ul style="text-align: left; color: #cccccc; padding-left: 20px;">
-                    <li>Reajuste ilegal de aluguel</li>
-                    <li>Garantia dupla (fiador + caução)</li>
-                    <li>Multa abusiva de 12 meses</li>
-                </ul>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        with col2:
-            st.markdown("""
-            <div style="padding: 25px; background: rgba(26, 26, 26, 0.9); border-radius: 15px; text-align: center; height: 100%; border: 1px solid rgba(212, 175, 55, 0.3);">
-                <div style="font-size: 2.5em; margin-bottom: 15px;">⚠️</div>
-                <h4 style="color: #ffaa44; margin: 10px 0;">ATENÇÃO NECESSÁRIA</h4>
-                <ul style="text-align: left; color: #cccccc; padding-left: 20px;">
-                    <li>Violacão de privacidade</li>
-                    <li>Venda que "despeja" inquilino</li>
-                    <li>Visitas sem aviso prévio</li>
-                </ul>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        with col3:
-            st.markdown("""
-            <div style="padding: 25px; background: rgba(26, 26, 26, 0.9); border-radius: 15px; text-align: center; height: 100%; border: 1px solid rgba(212, 175, 55, 0.3);">
-                <div style="font-size: 2.5em; margin-bottom: 15px;">ℹ️</div>
-                <h4 style="color: #44aaff; margin: 10px 0;">PONTOS IMPORTANTES</h4>
-                <ul style="text-align: left; color: #cccccc; padding-left: 20px;">
-                    <li>Proibição total de animais</li>
-                    <li>Benfeitorias não ressarcidas</li>
-                    <li>Cláusulas ambíguas</li>
-                </ul>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        # Rodapé informativo
+        # Rodapé informativo (simplificado)
         st.markdown("""
         <div style="text-align: center; margin: 60px 0 30px 0; padding: 30px; background: rgba(26, 26, 26, 0.7); border-radius: 15px; border-top: 2px solid #d4af37;">
-            <h4 style="color: #d4af37; margin-bottom: 15px;">⚖️ BASE LEGAL DO SISTEMA</h4>
-            <p style="color: #cccccc; max-width: 800px; margin: 0 auto;">
-                Utilizamos a <strong style="color: #ffffff;">Lei 8.245/91 (Lei do Inquilinato)</strong>, 
-                <strong style="color: #ffffff;">Lei 10.192/01</strong> e o 
-                <strong style="color: #ffffff;">Código de Defesa do Consumidor</strong> para identificar 
-                cláusulas abusivas e ilegais em contratos de locação.
+            <h4 style="color: #d4af37; margin-bottom: 15px;">⚖️ SISTEMA DE DETECÇÃO INTELIGENTE</h4>
+            <p style="color: #cccccc; max-width: 800px; margin: 0 auto; font-size: 1.1em;">
+                Analisamos automaticamente: <strong style="color: #ff4444;">Reajustes ilegais</strong> • 
+                <strong style="color: #ff4444;">Garantias duplas</strong> • 
+                <strong style="color: #ffaa44;">Violação de privacidade</strong> • 
+                <strong style="color: #44aaff;">Cláusulas abusivas</strong>
             </p>
             <p style="color: #999999; margin-top: 20px; font-size: 0.9em;">
-                ⚠️ Este sistema oferece orientação jurídica inicial. Para questões específicas, consulte um advogado.
+                ⚠️ Baseado na Lei 8.245/91 (Lei do Inquilinato) e Código de Defesa do Consumidor
             </p>
         </div>
         """, unsafe_allow_html=True)
