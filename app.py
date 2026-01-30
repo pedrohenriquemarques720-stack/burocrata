@@ -3,417 +3,470 @@ import pdfplumber
 import re
 import unicodedata
 from datetime import datetime
-import pandas as pd
-import io
 
 # --------------------------------------------------
 # CONFIGURAÇÃO
 # --------------------------------------------------
 st.set_page_config(
-    page_title="Burocrata de Bolso - Detector de Armadilhas",
+    page_title="Burocrata de Bolso - Auditor Jurídico",
     page_icon="⚖️",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="collapsed"
 )
 
 # --------------------------------------------------
-# ESTILOS
+# ESTILOS MINIMALISTAS
 # --------------------------------------------------
 st.markdown("""
 <style>
-    .header-title {
-        font-family: 'Georgia', serif;
-        font-weight: 600;
-        color: #1a365d;
-        border-bottom: 2px solid #c9a96e;
-        padding-bottom: 10px;
+    .main-header {
+        text-align: center;
+        padding: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
         margin-bottom: 30px;
     }
     
-    .problem-card {
-        background-color: white;
-        border-radius: 8px;
+    .detected-issue {
         padding: 15px;
-        margin-bottom: 10px;
-        border-left: 4px solid;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        margin: 10px 0;
+        border-radius: 8px;
+        border-left: 5px solid;
     }
     
-    .critico { border-left-color: #c53030; }
-    .medio { border-left-color: #d69e2e; }
-    .leve { border-left-color: #38a169; }
+    .critical { 
+        background-color: #fff5f5; 
+        border-left-color: #fc8181;
+    }
+    
+    .medium { 
+        background-color: #fffaf0; 
+        border-left-color: #f6ad55;
+    }
+    
+    .low { 
+        background-color: #f0fff4; 
+        border-left-color: #68d391;
+    }
+    
+    .upload-area {
+        border: 2px dashed #4a5568;
+        border-radius: 10px;
+        padding: 30px;
+        text-align: center;
+        margin: 20px 0;
+    }
+    
+    .result-card {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        margin: 15px 0;
+    }
 </style>
 """, unsafe_allow_html=True)
 
 # --------------------------------------------------
-# SISTEMA DE DETECÇÃO SIMPLES MAS EFETIVO
+# SISTEMA DE DETECÇÃO ROBUSTO
 # --------------------------------------------------
 
-class DetectorArmadilhas:
-    """Sistema simples de detecção baseado em palavras-chave"""
-    
+class SistemaAuditoria:
     def __init__(self):
-        self.problemas_detectados = []
+        self.padroes = {
+            'reajuste_ilegal': {
+                'regex': [
+                    r'reajuste.*?(trimestral|mensal|semestral|bianual|bimestral)',
+                    r'reajuste.*?(a cada|cada).*?(3|4|6).*?(mes|mês)',
+                    r'reajuste.*?3.*?meses',
+                    r'reajuste.*?6.*?meses',
+                    r'trimestralmente.*?reajuste'
+                ],
+                'nome': 'Reajuste Ilegal',
+                'gravidade': 'critical',
+                'descricao': 'Reajuste deve ser ANUAL (12 meses). Períodos menores são ilegais.',
+                'lei': 'Lei 10.192/01'
+            },
+            'garantia_dupla': {
+                'regex': [
+                    r'fiador.*?(e|mais|alem).*?(caucao|deposito|seguro)',
+                    r'(caucao|deposito|seguro).*?(e|mais|alem).*?fiador',
+                    r'exige.*?fiador.*?(caucao|deposito)',
+                    r'exige.*?(caucao|deposito).*?fiador',
+                    r'fiador.*?caucao',
+                    r'caucao.*?fiador'
+                ],
+                'nome': 'Garantia Dupla Ilegal',
+                'gravidade': 'critical',
+                'descricao': 'É proibido exigir fiador E caução simultaneamente.',
+                'lei': 'Art. 37, Lei 8.245/91'
+            },
+            'benfeitorias_ilegal': {
+                'regex': [
+                    r'renuncia.*?(benfeitoria|reforma|obra)',
+                    r'nao.*?(indeniza|recebe|tem direito).*?(benfeitoria|reforma|obra)',
+                    r'sem.*?direito.*?(benfeitoria|reforma|obra)',
+                    r'abre.*?mao.*?(benfeitoria|reforma|obra)'
+                ],
+                'nome': 'Renúncia Ilegal a Benfeitorias',
+                'gravidade': 'critical',
+                'descricao': 'Inquilino tem direito a indenização por benfeitorias necessárias.',
+                'lei': 'Art. 35, Lei 8.245/91'
+            },
+            'privacidade_violada': {
+                'regex': [
+                    r'(qualquer|a qualquer|livre).*?(visita|vistoria|ingresso)',
+                    r'sem.*?aviso.*?(visita|vistoria|entrar)',
+                    r'visita.*?sem.*?aviso',
+                    r'vistoria.*?sem.*?aviso'
+                ],
+                'nome': 'Violação de Privacidade',
+                'gravidade': 'medium',
+                'descricao': 'Locador não pode entrar sem aviso prévio e hora combinada.',
+                'lei': 'Art. 23, IX, Lei 8.245/91'
+            },
+            'multa_abusiva': {
+                'regex': [
+                    r'multa.*?(12|doze).*?meses',
+                    r'(12|doze).*?meses.*?multa',
+                    r'multa.*?integral.*?aluguel',
+                    r'multa.*?total.*?aluguel',
+                    r'pagar.*?(12|doze).*?meses.*?multa'
+                ],
+                'nome': 'Multa Abusiva',
+                'gravidade': 'critical',
+                'descricao': 'Multa deve ser proporcional. 12 meses é considerada abusiva.',
+                'lei': 'Art. 4º, Lei 8.245/91 e CDC'
+            }
+        }
     
-    def normalizar_texto(self, texto):
-        """Remove acentos e padroniza texto"""
+    def preparar_texto(self, texto):
+        """Prepara texto para análise"""
         if not texto:
             return ""
         
-        # Remove acentos
+        # Remove acentos e normaliza
         texto = unicodedata.normalize('NFKD', texto)
         texto = ''.join([c for c in texto if not unicodedata.combining(c)])
         
-        # Converte para minúsculas
+        # Converte para minúscula e remove espaços extras
         texto = texto.lower()
-        
-        # Substitui caracteres problemáticos
-        texto = texto.replace('ç', 'c').replace('ã', 'a').replace('õ', 'o')
-        texto = texto.replace('á', 'a').replace('é', 'e').replace('í', 'i')
-        texto = texto.replace('ó', 'o').replace('ú', 'u')
+        texto = re.sub(r'\s+', ' ', texto)
         
         return texto
     
-    def extrair_texto_pdf(self, arquivo_pdf):
-        """Extrai texto do PDF"""
-        try:
-            with pdfplumber.open(arquivo_pdf) as pdf:
-                texto_completo = ""
-                for pagina in pdf.pages:
-                    texto = pagina.extract_text() or ""
-                    texto_completo += texto + "\n"
-                return texto_completo
-        except Exception as e:
-            st.error(f"Erro ao ler PDF: {e}")
-            return ""
-    
-    def buscar_armadilhas(self, texto):
-        """Busca todas as armadilhas conhecidas"""
-        texto_normalizado = self.normalizar_texto(texto)
+    def analisar_contrato(self, texto):
+        """Analisa contrato e retorna problemas encontrados"""
+        texto_preparado = self.preparar_texto(texto)
+        problemas = []
         
-        # DEBUG: Mostrar texto normalizado
-        with st.expander("🔍 Ver texto processado (para debug)"):
-            st.text_area("Texto normalizado:", texto_normalizado[:1500], height=300)
-        
-        # Lista de armadilhas a serem detectadas
-        armadilhas = [
-            {
-                "nome": "Reajuste Ilegal",
-                "id": "reajuste",
-                "gravidade": "critico",
-                "exp": "Reajuste deve ser ANUAL (12 meses). Trimestral/mensal é ilegal.",
-                "lei": "Lei 10.192/01",
-                "palavras_chave": [
-                    "reajuste trimestral",
-                    "reajuste mensal",
-                    "reajuste a cada 3 meses",
-                    "reajuste a cada 6 meses",
-                    "reajuste semestral",
-                    "reajuste bimestral",
-                    "reajuste bianual",
-                    "trimestralmente",
-                    "mensalmente",
-                    "cada trimestre"
-                ]
-            },
-            {
-                "nome": "Garantia Dupla Ilegal",
-                "id": "garantia_dupla",
-                "gravidade": "critico",
-                "exp": "Não pode exigir fiador E caução simultaneamente.",
-                "lei": "Art. 37, Lei 8.245/91",
-                "palavras_chave": [
-                    "fiador e caucao",
-                    "caucao e fiador",
-                    "fiador deposito",
-                    "fiador mais caucao",
-                    "fiador alem de caucao",
-                    "fiador junto com caucao",
-                    "fiador, caucao",
-                    "fiador; caucao",
-                    "fiador caucao",
-                    "caucao fiador"
-                ]
-            },
-            {
-                "nome": "Renúncia a Benfeitorias",
-                "id": "benfeitorias",
-                "gravidade": "critico",
-                "exp": "Inquilino tem direito a indenização por benfeitorias necessárias.",
-                "lei": "Art. 35, Lei 8.245/91",
-                "palavras_chave": [
-                    "renuncia benfeitoria",
-                    "nao indeniza benfeitoria",
-                    "sem direito benfeitoria",
-                    "nao tem direito benfeitoria",
-                    "renuncia reforma",
-                    "nao indeniza reforma",
-                    "sem direito reforma",
-                    "renuncia obra",
-                    "nao recebera benfeitoria",
-                    "abre mao benfeitoria"
-                ]
-            },
-            {
-                "nome": "Violação de Privacidade",
-                "id": "privacidade",
-                "gravidade": "medio",
-                "exp": "Locador não pode entrar sem aviso prévio e hora combinada.",
-                "lei": "Art. 23, IX, Lei 8.245/91",
-                "palavras_chave": [
-                    "qualquer visita",
-                    "sem aviso visita",
-                    "a qualquer visita",
-                    "livre visita",
-                    "qualquer vistoria",
-                    "sem aviso vistoria",
-                    "qualquer entrar",
-                    "sem aviso entrar",
-                    "visita sem aviso",
-                    "vistoria sem aviso"
-                ]
-            },
-            {
-                "nome": "Multa Desproporcional",
-                "id": "multa",
-                "gravidade": "critico",
-                "exp": "Multa deve ser proporcional ao tempo restante. 12 meses é abusivo.",
-                "lei": "Art. 4º, Lei 8.245/91",
-                "palavras_chave": [
-                    "multa 12 meses",
-                    "multa doze meses",
-                    "12 meses multa",
-                    "doze meses multa",
-                    "multa integral",
-                    "multa total",
-                    "multa completa",
-                    "pagar 12 meses multa",
-                    "multa correspondente 12 meses"
-                ]
-            },
-            {
-                "nome": "Venda Despeja Inquilino",
-                "id": "venda",
-                "gravidade": "medio",
-                "exp": "Venda não rescinde automaticamente. Inquilino tem preferência.",
-                "lei": "Art. 27, Lei 8.245/91",
-                "palavras_chave": [
-                    "venda rescindido",
-                    "venda rescisao",
-                    "venda terminar",
-                    "venda desocupar",
-                    "alienacao rescindir",
-                    "venda automaticamente",
-                    "venda automatico"
-                ]
-            },
-            {
-                "nome": "Proibição de Animais",
-                "id": "animais",
-                "gravidade": "leve",
-                "exp": "Proibição total pode ser abusiva. Apenas por justa causa.",
-                "lei": "Art. 51, CDC",
-                "palavras_chave": [
-                    "proibido animais",
-                    "vedado animais",
-                    "nao permitido animais",
-                    "proibicao animais",
-                    "nao animais",
-                    "proibido pet",
-                    "vedado pet",
-                    "proibido animal"
-                ]
-            }
-        ]
-        
-        problemas_encontrados = []
-        
-        for armadilha in armadilhas:
+        for chave, config in self.padroes.items():
             encontrado = False
             contexto = ""
             
-            for palavra_chave in armadilha["palavras_chave"]:
-                if palavra_chave in texto_normalizado:
-                    encontrado = True
-                    
-                    # Extrair contexto
-                    idx = texto_normalizado.find(palavra_chave)
-                    inicio = max(0, idx - 100)
-                    fim = min(len(texto_normalizado), idx + len(palavra_chave) + 100)
-                    contexto = f"...{texto_normalizado[inicio:fim]}..."
-                    
-                    break
+            for padrao in config['regex']:
+                try:
+                    match = re.search(padrao, texto_preparado, re.IGNORECASE)
+                    if match:
+                        encontrado = True
+                        # Extrair contexto
+                        inicio = max(0, match.start() - 100)
+                        fim = min(len(texto_preparado), match.end() + 100)
+                        contexto = texto_preparado[inicio:fim]
+                        break
+                except:
+                    continue
             
             if encontrado:
-                problemas_encontrados.append({
-                    "nome": armadilha["nome"],
-                    "id": armadilha["id"],
-                    "gravidade": armadilha["gravidade"],
-                    "exp": armadilha["exp"],
-                    "lei": armadilha["lei"],
-                    "contexto": contexto
+                problemas.append({
+                    'id': chave,
+                    'nome': config['nome'],
+                    'gravidade': config['gravidade'],
+                    'descricao': config['descricao'],
+                    'lei': config['lei'],
+                    'contexto': f"...{contexto}..." if contexto else ""
                 })
-                st.success(f"✅ Detectado: {armadilha['nome']}")
         
-        return problemas_encontrados
+        return problemas
+    
+    def calcular_score(self, problemas):
+        """Calcula score de conformidade"""
+        if not problemas:
+            return 100
+        
+        penalidade = 0
+        for problema in problemas:
+            if problema['gravidade'] == 'critical':
+                penalidade += 20
+            elif problema['gravidade'] == 'medium':
+                penalidade += 10
+            else:
+                penalidade += 5
+        
+        return max(100 - penalidade, 0)
+
+# --------------------------------------------------
+# FUNÇÕES AUXILIARES
+# --------------------------------------------------
+
+def extrair_texto_pdf(arquivo):
+    """Extrai texto de arquivo PDF"""
+    try:
+        with pdfplumber.open(arquivo) as pdf:
+            texto = ""
+            for pagina in pdf.pages:
+                conteudo = pagina.extract_text() or ""
+                texto += conteudo + "\n"
+            return texto
+    except Exception as e:
+        st.error(f"Erro ao extrair texto: {str(e)}")
+        return ""
+
+def obter_cor_score(score):
+    """Retorna cor baseada no score"""
+    if score >= 80:
+        return "green"
+    elif score >= 60:
+        return "orange"
+    else:
+        return "red"
 
 # --------------------------------------------------
 # INTERFACE PRINCIPAL
 # --------------------------------------------------
 
-st.markdown('<h1 class="header-title">🔍 Detector de Armadilhas em Contratos</h1>', unsafe_allow_html=True)
-st.markdown("**Versão 6.0 - Sistema Aprimorado**")
-
-# Upload
-st.subheader("📤 Upload do Contrato")
-arquivo = st.file_uploader(
-    "Selecione o contrato em PDF",
-    type=["pdf"],
-    help="Contratos de locação residencial"
-)
-
-# Texto de teste
-st.subheader("📝 Contrato de Teste (para copiar)")
-texto_teste = """CONTRATO DE LOCAÇÃO RESIDENCIAL
-
-CLÁUSULA 1 - DO OBJETO
-A LOCADORA dá em locação ao LOCATÁRIO o imóvel residencial.
-
-CLÁUSULA 2 - DO PRAZO
-Contrato com vigência de 30 meses.
-
-CLÁUSULA 3 - DO VALOR DO ALUGUEL
-O aluguel mensal será de R$ 3.000,00. O reajuste será trimestral.
-
-CLÁUSULA 4 - DAS GARANTIAS
-O LOCATÁRIO deverá apresentar fiadores e depósito caução.
-
-CLÁUSULA 5 - DAS BENFEITORIAS
-O LOCATÁRIO renuncia a qualquer indenização por benfeitorias.
-
-CLÁUSULA 6 - DAS VISITAS
-A LOCADORA poderá visitar o imóvel a qualquer tempo, sem aviso.
-
-CLÁUSULA 7 - DA MULTA
-Multa de 12 meses de aluguel em caso de rescisão.
-
-CLÁUSULA 8 - DOS ANIMAIS
-Proibida a permanência de animais.
-
-CLÁUSULA 9 - DA VENDA
-Em caso de venda, contrato rescindido automaticamente.
-
-CLÁUSULA 10 - DO FORO
-Foro da Comarca de São Paulo."""
-st.code(texto_teste, language="text")
-
-st.info("""
-**🎯 Armadilhas que DEVEM ser detectadas:**
-1. 🚨 **Reajuste trimestral** (Cláusula 3)
-2. 🚨 **Fiador E caução** (Cláusula 4) 
-3. 🚨 **Renúncia a benfeitorias** (Cláusula 5)
-4. ⚠️ **Visitas sem aviso** (Cláusula 6)
-5. 🚨 **Multa de 12 meses** (Cláusula 7)
-""")
-
-if arquivo:
-    if st.button("🔍 ANALISAR CONTRATO", type="primary", use_container_width=True):
-        with st.spinner("Analisando..."):
-            # Inicializar detector
-            detector = DetectorArmadilhas()
-            
+def main():
+    # Cabeçalho
+    st.markdown("""
+    <div class="main-header">
+        <h1>⚖️ BUROCRATA DE BOLSO</h1>
+        <p>Sistema Inteligente de Auditoria de Contratos</p>
+        <p style="font-size: 0.9em; opacity: 0.9;">Versão 7.0 - Foco em Resultados</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Inicializar sistema
+    auditoria = SistemaAuditoria()
+    
+    # Área de upload
+    st.markdown("### 📄 CARREGUE SEU CONTRATO")
+    
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        arquivo = st.file_uploader(
+            "Selecione o contrato em PDF",
+            type=["pdf"],
+            label_visibility="collapsed"
+        )
+    
+    if arquivo:
+        # Processar arquivo
+        with st.spinner("🔍 Analisando contrato..."):
             # Extrair texto
-            texto = detector.extrair_texto_pdf(arquivo)
+            texto_contrato = extrair_texto_pdf(arquivo)
             
-            if texto:
-                # Buscar armadilhas
-                problemas = detector.buscar_armadilhas(texto)
+            if texto_contrato:
+                # Analisar contrato
+                problemas = auditoria.analisar_contrato(texto_contrato)
+                score = auditoria.calcular_score(problemas)
                 
-                # Mostrar resultados
-                st.subheader("📊 Resultados da Análise")
+                # Resultados
+                st.markdown("---")
                 
-                if problemas:
-                    # Contadores
-                    criticos = sum(1 for p in problemas if p["gravidade"] == "critico")
-                    medios = sum(1 for p in problemas if p["gravidade"] == "medio")
-                    leves = sum(1 for p in problemas if p["gravidade"] == "leve")
+                # Score Card
+                col_score, col_problems = st.columns([1, 2])
+                
+                with col_score:
+                    st.markdown("### 📊 ÍNDICE DE CONFORMIDADE")
+                    cor = obter_cor_score(score)
+                    st.markdown(f"""
+                    <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%); border-radius: 10px;">
+                        <h1 style="color: {cor}; margin: 0;">{score}/100</h1>
+                        <p style="margin: 5px 0 0 0; font-weight: bold;">
+                            {'✅ EXCELENTE' if score >= 80 else '⚠️ ATENÇÃO' if score >= 60 else '🚨 CRÍTICO'}
+                        </p>
+                    </div>
+                    """, unsafe_allow_html=True)
                     
-                    col1, col2, col3 = st.columns(3)
-                    with col1:
-                        st.metric("🚨 Críticos", criticos)
-                    with col2:
-                        st.metric("⚠️ Médios", medios)
-                    with col3:
-                        st.metric("ℹ️ Leves", leves)
+                    st.progress(score/100)
                     
-                    # Lista de problemas detectados
-                    st.subheader("🔎 Problemas Encontrados")
+                    # Estatísticas
+                    crit = sum(1 for p in problemas if p['gravidade'] == 'critical')
+                    med = sum(1 for p in problemas if p['gravidade'] == 'medium')
+                    low = sum(1 for p in problemas if p['gravidade'] == 'low')
                     
-                    for problema in problemas:
-                        classe = problema["gravidade"]
+                    st.metric("🚨 Críticos", crit)
+                    st.metric("⚠️ Médios", med)
+                    st.metric("ℹ️ Leves", low)
+                
+                with col_problems:
+                    if problemas:
+                        st.markdown("### 🚨 PROBLEMAS DETECTADOS")
                         
+                        # Agrupar por gravidade
+                        problemas_criticos = [p for p in problemas if p['gravidade'] == 'critical']
+                        problemas_medios = [p for p in problemas if p['gravidade'] == 'medium']
+                        problemas_leves = [p for p in problemas if p['gravidade'] == 'low']
+                        
+                        # Mostrar problemas críticos primeiro
+                        for problema in problemas_criticos + problemas_medios + problemas_leves:
+                            gravidade_class = {
+                                'critical': 'critical',
+                                'medium': 'medium', 
+                                'low': 'low'
+                            }[problema['gravidade']]
+                            
+                            emoji = {
+                                'critical': '🚨',
+                                'medium': '⚠️',
+                                'low': 'ℹ️'
+                            }[problema['gravidade']]
+                            
+                            st.markdown(f"""
+                            <div class="detected-issue {gravidade_class}">
+                                <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                                    <span style="font-size: 1.5em; margin-right: 10px;">{emoji}</span>
+                                    <h4 style="margin: 0;">{problema['nome']}</h4>
+                                </div>
+                                <p><strong>Descrição:</strong> {problema['descricao']}</p>
+                                <p><strong>Base Legal:</strong> {problema['lei']}</p>
+                            </div>
+                            """, unsafe_allow_html=True)
+                            
+                            if problema.get('contexto'):
+                                with st.expander("📝 Ver trecho do contrato"):
+                                    st.text(problema['contexto'])
+                        
+                        # Resumo
+                        st.markdown(f"### 📋 RESUMO DA AUDITORIA")
                         st.markdown(f"""
-                        <div class="problem-card {classe}">
-                            <h4>{'🚨' if classe == 'critico' else '⚠️' if classe == 'medio' else 'ℹ️'} 
-                            {problema['nome']}</h4>
-                            <p><strong>Descrição:</strong> {problema['exp']}</p>
-                            <p><strong>Base Legal:</strong> {problema['lei']}</p>
+                        - **Total de problemas:** {len(problemas)}
+                        - **Críticos:** {len(problemas_criticos)}
+                        - **Médios:** {len(problemas_medios)}
+                        - **Leves:** {len(problemas_leves)}
+                        """)
+                        
+                        # Recomendações
+                        if problemas_criticos:
+                            st.markdown("""
+                            ### ⚠️ RECOMENDAÇÕES URGENTES
+                            1. **NEGOCIAR** as cláusulas críticas antes de assinar
+                            2. **BUSCAR ASSESSORIA JURÍDICA** especializada
+                            3. **NÃO ASSINAR** sem corrigir as irregularidades críticas
+                            """)
+                    else:
+                        st.markdown("""
+                        <div style="text-align: center; padding: 40px; background-color: #f0fff4; border-radius: 10px;">
+                            <h2 style="color: #276749;">✅ CONTRATO REGULAR</h2>
+                            <p style="font-size: 1.1em;">Nenhuma irregularidade grave detectada nas cláusulas analisadas.</p>
                         </div>
                         """, unsafe_allow_html=True)
-                        
-                        if problema.get("contexto"):
-                            with st.expander("📄 Ver trecho do contrato"):
-                                st.text(problema["contexto"])
-                    
-                    # Resumo
-                    st.success(f"✅ **Total de problemas detectados: {len(problemas)}**")
-                    
-                    # Verificar se detectou todos os esperados
-                    problemas_ids = [p["id"] for p in problemas]
-                    esperados = ["reajuste", "garantia_dupla", "benfeitorias", "privacidade", "multa"]
-                    
-                    faltando = [id for id in esperados if id not in problemas_ids]
-                    if faltando:
-                        st.warning(f"⚠️ **Não detectado:** {', '.join(faltando)}")
-                    
-                else:
-                    st.success("✅ Nenhuma armadilha detectada!")
+                
+                # Informações adicionais
+                st.markdown("---")
+                col_info1, col_info2, col_info3 = st.columns(3)
+                
+                with col_info1:
+                    st.markdown("### 📈 ESTATÍSTICAS")
+                    st.markdown(f"""
+                    - Texto analisado: {len(texto_contrato):,} caracteres
+                    - Padrões verificados: {len(auditoria.padroes)}
+                    - Tempo de análise: Instantâneo
+                    """)
+                
+                with col_info2:
+                    st.markdown("### ⚖️ LEGISLAÇÃO APLICÁVEL")
+                    st.markdown("""
+                    - Lei 8.245/91 (Lei do Inquilinato)
+                    - Lei 10.192/01 (Reajustes)
+                    - Código de Defesa do Consumidor
+                    - Jurisprudência do STJ
+                    """)
+                
+                with col_info3:
+                    st.markdown("### 🔒 SEGURANÇA")
+                    st.markdown("""
+                    - Processamento local
+                    - Nenhum dado armazenado
+                    - Análise em tempo real
+                    - Sem registro de informações
+                    """)
+            
             else:
-                st.error("❌ Não foi possível ler o texto do PDF")
+                st.error("❌ Não foi possível extrair texto do PDF. Verifique se o arquivo não está protegido ou corrompido.")
+    
+    else:
+        # Tela inicial
+        st.markdown("""
+        <div style="text-align: center; padding: 40px;">
+            <h2>🎯 COMO FUNCIONA</h2>
+            <div style="display: flex; justify-content: center; gap: 30px; margin-top: 30px; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 200px; padding: 20px; background: white; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <h3>1. 📤 UPLOAD</h3>
+                    <p>Carregue seu contrato em PDF</p>
+                </div>
+                <div style="flex: 1; min-width: 200px; padding: 20px; background: white; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <h3>2. 🔍 ANÁLISE</h3>
+                    <p>Sistema analisa automaticamente</p>
+                </div>
+                <div style="flex: 1; min-width: 200px; padding: 20px; background: white; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <h3>3. 📊 RESULTADO</h3>
+                    <p>Relatório completo com problemas</p>
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Áreas de atuação
+        st.markdown("---")
+        st.markdown("### ⚖️ ÁREAS DE ATUAÇÃO")
+        
+        col_area1, col_area2, col_area3, col_area4 = st.columns(4)
+        
+        with col_area1:
+            st.markdown("""
+            <div style="text-align: center; padding: 15px; background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%); color: white; border-radius: 8px;">
+                <h4>🏠 LOCAÇÃO</h4>
+                <p>Contratos residenciais</p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col_area2:
+            st.markdown("""
+            <div style="text-align: center; padding: 15px; background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%); color: white; border-radius: 8px;">
+                <h4>⚖️ SERVIÇOS</h4>
+                <p>Prestação de serviços</p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col_area3:
+            st.markdown("""
+            <div style="text-align: center; padding: 15px; background: linear-gradient(135deg, #38a169 0%, #2f855a 100%); color: white; border-radius: 8px;">
+                <h4>💰 COMPRA/VENDA</h4>
+                <p>Imóveis e bens</p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col_area4:
+            st.markdown("""
+            <div style="text-align: center; padding: 15px; background: linear-gradient(135deg, #9f7aea 0%, #805ad5 100%); color: white; border-radius: 8px;">
+                <h4>🧾 FISCAL</h4>
+                <p>Notas fiscais</p>
+            </div>
+            """, unsafe_allow_html=True)
 
-# Sidebar com informações
-with st.sidebar:
-    st.markdown("### 📋 Armadilhas Detectáveis")
-    
-    st.markdown("""
-    **🚨 Críticas (ilegais):**
-    1. Reajuste não-anual
-    2. Garantia dupla
-    3. Renúncia a benfeitorias
-    4. Multa de 12 meses
-    
-    **⚠️ Problemas médios:**
-    1. Violação de privacidade
-    2. Venda despeja inquilino
-    
-    **ℹ️ Atenção:**
-    1. Proibição total de animais
-    """)
-    
-    st.markdown("---")
-    
-    st.markdown("### 🎯 Como testar")
-    st.markdown("""
-    1. Copie o texto do contrato de teste
-    2. Cole no Word/Bloco de Notas
-    3. Salve como PDF
-    4. Faça upload aqui
-    5. Clique em ANALISAR
-    """)
-
-# Rodapé
-st.markdown("---")
+# --------------------------------------------------
+# RODAPÉ
+# --------------------------------------------------
 st.markdown("""
-<div style="text-align: center; color: #718096; font-size: 12px;">
-    Burocrata de Bolso v6.0 | Sistema de Detecção de Armadilhas © 2024
-</div>
+<footer style="text-align: center; padding: 20px; margin-top: 40px; color: #718096; font-size: 0.9em;">
+    <hr style="border: none; height: 1px; background: #e2e8f0; margin: 20px 0;">
+    <p>BUROCRATA DE BOLSO | Sistema de Auditoria Jurídica © 2024</p>
+    <p><small>Este sistema fornece análise automática baseada em padrões. Não substitui consulta jurídica profissional.</small></p>
+</footer>
 """, unsafe_allow_html=True)
+
+# Executar aplicação
+if __name__ == "__main__":
+    main()
