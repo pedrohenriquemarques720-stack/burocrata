@@ -3,10 +3,8 @@ import pdfplumber
 import re
 import unicodedata
 from datetime import datetime
-import plotly.graph_objects as go
-import plotly.express as px
 import pandas as pd
-import numpy as np
+import io
 
 # --------------------------------------------------
 # CONFIGURAÇÃO
@@ -82,6 +80,24 @@ st.markdown("""
     .badge-critical { background: #fee2e2; color: #dc2626; }
     .badge-medium { background: #fef3c7; color: #d97706; }
     .badge-low { background: #d1fae5; color: #059669; }
+    
+    .progress-bar-container {
+        height: 20px;
+        background: #e5e7eb;
+        border-radius: 10px;
+        margin: 10px 0;
+        overflow: hidden;
+    }
+    
+    .progress-bar-fill {
+        height: 100%;
+        border-radius: 10px;
+        transition: width 0.5s ease;
+    }
+    
+    .score-excellent { background: linear-gradient(90deg, #10b981, #34d399); }
+    .score-medium { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+    .score-poor { background: linear-gradient(90deg, #ef4444, #f87171); }
 </style>
 """, unsafe_allow_html=True)
 
@@ -286,62 +302,74 @@ def extrair_texto_pdf(arquivo):
         st.error(f"❌ Erro ao processar PDF: {str(e)}")
         return None
 
-def criar_grafico_distribuicao(metricas):
-    """Cria gráfico de distribuição de problemas"""
+def criar_grafico_distribuicao_html(metricas):
+    """Cria gráfico de distribuição usando HTML/CSS"""
     if metricas['total_problemas'] == 0:
         return None
     
-    # Dados para o gráfico
-    gravidades = ['Críticos', 'Médios', 'Leves']
-    valores = [metricas['criticos'], metricas['medios'], metricas['leves']]
-    cores = ['#ef4444', '#f59e0b', '#10b981']
+    total = metricas['total_problemas']
+    crit_percent = (metricas['criticos'] / total) * 100 if total > 0 else 0
+    med_percent = (metricas['medios'] / total) * 100 if total > 0 else 0
+    lev_percent = (metricas['leves'] / total) * 100 if total > 0 else 0
     
-    fig = go.Figure(data=[go.Bar(
-        x=gravidades,
-        y=valores,
-        marker_color=cores,
-        text=valores,
-        textposition='auto',
-    )])
-    
-    fig.update_layout(
-        title='Distribuição por Gravidade',
-        xaxis_title='Gravidade',
-        yaxis_title='Quantidade',
-        template='plotly_white',
-        height=300
-    )
-    
-    return fig
+    html = f"""
+    <div style="margin: 20px 0;">
+        <h4 style="margin-bottom: 15px;">📊 Distribuição por Gravidade</h4>
+        <div style="display: flex; height: 40px; border-radius: 8px; overflow: hidden; margin-bottom: 10px;">
+            <div style="flex: {metricas['criticos']}; background: #ef4444; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
+                {metricas['criticos']}
+            </div>
+            <div style="flex: {metricas['medios']}; background: #f59e0b; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
+                {metricas['medios']}
+            </div>
+            <div style="flex: {metricas['leves']}; background: #10b981; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
+                {metricas['leves']}
+            </div>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 0.9em; color: #6b7280;">
+            <div>🚨 Críticos: {crit_percent:.1f}%</div>
+            <div>⚠️ Médios: {med_percent:.1f}%</div>
+            <div>ℹ️ Leves: {lev_percent:.1f}%</div>
+        </div>
+    </div>
+    """
+    return html
 
-def criar_grafico_score(score):
-    """Cria gráfico de gauge para o score"""
-    fig = go.Figure(go.Indicator(
-        mode="gauge+number",
-        value=score,
-        domain={'x': [0, 1], 'y': [0, 1]},
-        title={'text': "Índice de Conformidade"},
-        gauge={
-            'axis': {'range': [None, 100]},
-            'bar': {'color': "darkblue"},
-            'steps': [
-                {'range': [0, 60], 'color': "red"},
-                {'range': [60, 80], 'color': "orange"},
-                {'range': [80, 100], 'color': "green"}
-            ],
-            'threshold': {
-                'line': {'color': "black", 'width': 4},
-                'thickness': 0.75,
-                'value': score
-            }
-        }
-    ))
+def criar_grafico_score_html(score):
+    """Cria gráfico de score usando HTML/CSS"""
+    if score >= 80:
+        score_class = "score-excellent"
+        status = "EXCELENTE"
+        color = "#10b981"
+    elif score >= 60:
+        score_class = "score-medium"
+        status = "ATENÇÃO"
+        color = "#f59e0b"
+    else:
+        score_class = "score-poor"
+        status = "CRÍTICO"
+        color = "#ef4444"
     
-    fig.update_layout(height=300)
-    return fig
+    html = f"""
+    <div style="text-align: center; margin: 20px 0;">
+        <h4 style="margin-bottom: 15px;">🎯 Índice de Conformidade</h4>
+        <div style="position: relative; margin: 0 auto; width: 200px; height: 200px;">
+            <div style="position: absolute; top: 0; left: 0; width: 200px; height: 200px; border-radius: 50%; background: conic-gradient(
+                {color} 0% {score}%,
+                #e5e7eb {score}% 100%
+            );"></div>
+            <div style="position: absolute; top: 20px; left: 20px; width: 160px; height: 160px; border-radius: 50%; background: white; display: flex; align-items: center; justify-content: center; flex-direction: column;">
+                <div style="font-size: 2.5em; font-weight: bold; color: {color};">{score}</div>
+                <div style="font-size: 1.1em; color: {color}; font-weight: bold;">{status}</div>
+                <div style="font-size: 0.9em; color: #6b7280;">de 100</div>
+            </div>
+        </div>
+    </div>
+    """
+    return html
 
-def criar_grafico_tendencia(problemas):
-    """Cria gráfico de tendência por tipo de problema"""
+def criar_grafico_tendencia_html(problemas):
+    """Cria gráfico de tendência usando HTML/CSS"""
     if not problemas:
         return None
     
@@ -351,19 +379,30 @@ def criar_grafico_tendencia(problemas):
         nome = problema['nome']
         tipos[nome] = tipos.get(nome, 0) + 1
     
-    # Criar gráfico
-    df = pd.DataFrame({
-        'Tipo': list(tipos.keys()),
-        'Ocorrências': list(tipos.values())
-    }).sort_values('Ocorrências', ascending=False)
+    # Encontrar máximo para escala
+    max_val = max(tipos.values()) if tipos else 1
     
-    fig = px.bar(df, x='Tipo', y='Ocorrências', 
-                 title='Frequência por Tipo de Problema',
-                 color='Ocorrências',
-                 color_continuous_scale='Reds')
+    html = """
+    <div style="margin: 20px 0;">
+        <h4 style="margin-bottom: 15px;">📈 Frequência por Tipo de Problema</h4>
+    """
     
-    fig.update_layout(height=350, xaxis_tickangle=-45)
-    return fig
+    for tipo, quantidade in sorted(tipos.items(), key=lambda x: x[1], reverse=True):
+        percentual = (quantidade / max_val) * 100
+        html += f"""
+        <div style="margin-bottom: 10px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                <span style="font-size: 0.9em;">{tipo}</span>
+                <span style="font-weight: bold;">{quantidade}</span>
+            </div>
+            <div class="progress-bar-container">
+                <div class="progress-bar-fill" style="width: {percentual}%; background: linear-gradient(90deg, #ef4444, #f87171);"></div>
+            </div>
+        </div>
+        """
+    
+    html += "</div>"
+    return html
 
 # --------------------------------------------------
 # INTERFACE PRINCIPAL
@@ -375,7 +414,7 @@ def main():
     <div class="main-header">
         <h1 style="margin: 0; font-size: 2.5em;">⚖️ BUROCRATA DE BOLSO</h1>
         <p style="margin: 10px 0 0 0; font-size: 1.2em; opacity: 0.9;">Sistema Inteligente de Auditoria Jurídica</p>
-        <p style="margin: 5px 0 0 0; font-size: 0.9em; opacity: 0.7;">Versão 8.0 - Análise Avançada com IA</p>
+        <p style="margin: 5px 0 0 0; font-size: 0.9em; opacity: 0.7;">Versão 8.0 - Análise Avançada</p>
     </div>
     """, unsafe_allow_html=True)
     
@@ -466,19 +505,21 @@ def main():
                     
                     with col_graf1:
                         # Gráfico de score
-                        fig_score = criar_grafico_score(metricas['score_conformidade'])
-                        st.plotly_chart(fig_score, use_container_width=True)
+                        score_html = criar_grafico_score_html(metricas['score_conformidade'])
+                        if score_html:
+                            st.markdown(score_html, unsafe_allow_html=True)
                     
                     with col_graf2:
                         # Gráfico de distribuição
-                        fig_dist = criar_grafico_distribuicao(metricas)
-                        if fig_dist:
-                            st.plotly_chart(fig_dist, use_container_width=True)
+                        dist_html = criar_grafico_distribuicao_html(metricas)
+                        if dist_html:
+                            st.markdown(dist_html, unsafe_allow_html=True)
                     
                     # Gráfico de tendência
-                    fig_tend = criar_grafico_tendencia(problemas)
-                    if fig_tend:
-                        st.plotly_chart(fig_tend, use_container_width=True)
+                    tend_html = criar_grafico_tendencia_html(problemas)
+                    if tend_html:
+                        st.markdown("### 📋 Distribuição Detalhada")
+                        st.markdown(tend_html, unsafe_allow_html=True)
                 
                 # Lista detalhada de problemas
                 st.markdown("---")
@@ -558,12 +599,11 @@ def main():
                         """)
                     
                     with col_res2:
-                        st.markdown("""
+                        st.markdown(f"""
                         **📊 ESTATÍSTICAS:**
                         
-                        - **Nível de risco:** """ + metricas['nivel_risco'] + """
-                        - **Problemas por página:** """ + f"{metricas['total_problemas']} encontrados"
-                        + """
+                        - **Nível de risco:** {metricas['nivel_risco']}
+                        - **Problemas por página:** {metricas['total_problemas']} encontrados
                         - **Taxa de detecção:** Sistema verifica 7 tipos de cláusulas
                         - **Confiabilidade:** Baseado em jurisprudência consolidada
                         """)
@@ -580,8 +620,9 @@ def main():
                     """, unsafe_allow_html=True)
                     
                     # Gráfico de score para contratos regulares
-                    fig_score = criar_grafico_score(metricas['score_conformidade'])
-                    st.plotly_chart(fig_score, use_container_width=True)
+                    score_html = criar_grafico_score_html(metricas['score_conformidade'])
+                    if score_html:
+                        st.markdown(score_html, unsafe_allow_html=True)
     
     else:
         # Tela inicial com estatísticas e informações
