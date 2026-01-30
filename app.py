@@ -682,4 +682,232 @@ def main():
                 with col2:
                     st.markdown(f"""
                     <div class="metric-card" style="border-top-color: #ef4444;">
-                       
+                        <h3 style="margin: 0; color: #1e3a8a;">{metricas['criticos']}</h3>
+                        <p style="margin: 5px 0 0 0; font-weight: 600;">Problemas Críticos</p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                
+                with col3:
+                    st.markdown(f"""
+                    <div class="metric-card" style="border-top-color: #f59e0b;">
+                        <h3 style="margin: 0; color: #1e3a8a;">{metricas['score_conformidade']:.0f}</h3>
+                        <p style="margin: 5px 0 0 0; font-weight: 600;">Score de Conformidade</p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                
+                with col4:
+                    st.markdown(f"""
+                    <div class="metric-card" style="border-top-color: #10b981;">
+                        <h3 style="margin: 0; color: #1e3a8a;">{metricas['nivel_risco']}</h3>
+                        <p style="margin: 5px 0 0 0; font-weight: 600;">Nível de Risco</p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                
+                # Gráficos e visualizações
+                col_left, col_right = st.columns([1, 1])
+                
+                with col_left:
+                    # Gráfico de distribuição
+                    html_dist = criar_grafico_distribuicao_html(metricas)
+                    if html_dist:
+                        st.markdown(html_dist, unsafe_allow_html=True)
+                    
+                    # Gráfico de confiança
+                    html_conf = criar_grafico_confianca_html(metricas)
+                    if html_conf:
+                        st.markdown(html_conf, unsafe_allow_html=True)
+                
+                with col_right:
+                    # Gráfico de score
+                    html_score = criar_grafico_score_html(metricas['score_conformidade'])
+                    if html_score:
+                        st.markdown(html_score, unsafe_allow_html=True)
+                
+                # Lista de problemas detectados
+                st.markdown("---")
+                st.markdown(f"""
+                <div style="margin: 30px 0;">
+                    <h2 style="color: #1e3a8a;">🔍 PROBLEMAS DETECTADOS</h2>
+                    <p style="color: #6b7280;">
+                        {len(problemas)} problema(s) encontrado(s) com sistema de detecção avançado
+                    </p>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                if problemas:
+                    for i, problema in enumerate(problemas, 1):
+                        # Determinar classe CSS baseado na gravidade
+                        classe_gravidade = {
+                            'critical': 'critical-card',
+                            'medium': 'medium-card',
+                            'low': 'low-card'
+                        }.get(problema['gravidade'], 'low-card')
+                        
+                        # Determinar cor do ícone
+                        cor_icone = {
+                            'critical': '#ef4444',
+                            'medium': '#f59e0b',
+                            'low': '#10b981'
+                        }.get(problema['gravidade'], '#10b981')
+                        
+                        # Determinar cor da gravidade
+                        cor_gravidade = {
+                            'critical': 'Crítico',
+                            'medium': 'Médio',
+                            'low': 'Leve'
+                        }.get(problema['gravidade'], 'Leve')
+                        
+                        cor_texto_gravidade = {
+                            'critical': '#dc2626',
+                            'medium': '#d97706',
+                            'low': '#059669'
+                        }.get(problema['gravidade'], '#059669')
+                        
+                        st.markdown(f"""
+                        <div class="issue-card {classe_gravidade}">
+                            <div style="display: flex; align-items: center; justify-content: space-between;">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <div style="font-size: 1.5em;">{problema['icone']}</div>
+                                    <div>
+                                        <h4 style="margin: 0; color: #1e3a8a;">#{i}: {problema['nome']}</h4>
+                                        <div style="display: flex; gap: 15px; margin-top: 5px;">
+                                            <span style="color: {cor_texto_gravidade}; font-weight: 600;">
+                                                🔴 Gravidade: {cor_gravidade}
+                                            </span>
+                                            <span style="color: #6b7280;">
+                                                📚 Base Legal: {problema['lei']}
+                                            </span>
+                                            <span class="confidence-badge {problema['classe_confianca']}">
+                                                Confiança: {problema['nivel_confianca']} ({problema['confianca']:.0%})
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="margin-top: 15px;">
+                                <p style="margin: 0 0 10px 0; color: #374151;">
+                                    {problema['descricao']}
+                                </p>
+                                <div style="background: #f9fafb; padding: 12px; border-radius: 6px; margin-top: 10px;">
+                                    <p style="margin: 0; font-size: 0.9em; color: #6b7280; font-style: italic;">
+                                        <strong>Contexto encontrado:</strong> {problema['contexto']}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                else:
+                    st.markdown("""
+                    <div style="text-align: center; padding: 50px; background: #f0fdf4; border-radius: 10px; margin: 20px 0;">
+                        <div style="font-size: 4em; color: #10b981;">✅</div>
+                        <h3 style="color: #065f46; margin: 10px 0;">Nenhum problema detectado!</h3>
+                        <p style="color: #059669;">Este contrato parece estar em conformidade com a legislação brasileira.</p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                
+                # Botão para exportar relatório
+                st.markdown("---")
+                st.markdown("""
+                <div style="text-align: center; margin: 30px 0;">
+                    <h3 style="color: #1e3a8a;">📥 EXPORTAR RELATÓRIO</h3>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                # Criar DataFrame para exportação
+                if problemas:
+                    dados_exportar = []
+                    for p in problemas:
+                        dados_exportar.append({
+                            'Problema': p['nome'],
+                            'Gravidade': p['gravidade'].capitalize(),
+                            'Descrição': p['descricao'],
+                            'Base Legal': p['lei'],
+                            'Confiança (%)': f"{p['confianca']:.1%}",
+                            'Contexto': p['contexto'][:200] + "..." if len(p['contexto']) > 200 else p['contexto']
+                        })
+                    
+                    df_relatorio = pd.DataFrame(dados_exportar)
+                    
+                    # Converter para CSV
+                    csv_buffer = io.StringIO()
+                    df_relatorio.to_csv(csv_buffer, index=False)
+                    csv_str = csv_buffer.getvalue()
+                    
+                    col1, col2, col3 = st.columns([1, 2, 1])
+                    with col2:
+                        st.download_button(
+                            label="📊 Baixar Relatório em CSV",
+                            data=csv_str,
+                            file_name=f"relatorio_auditoria_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                            mime="text/csv",
+                            use_container_width=True
+                        )
+    else:
+        # Mensagem inicial quando nenhum arquivo foi carregado
+        st.markdown("""
+        <div class="upload-container">
+            <div style="font-size: 4em; color: #9ca3af;">📄</div>
+            <h3 style="color: #4b5563; margin: 20px 0;">Arraste seu contrato em PDF aqui</h3>
+            <p style="color: #6b7280;">Ou clique para selecionar um arquivo</p>
+            <p style="color: #9ca3af; font-size: 0.9em; margin-top: 30px;">
+                🔒 Seus dados são processados localmente e não são armazenados
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Informações sobre o sistema
+        st.markdown("---")
+        st.markdown("""
+        <div style="text-align: center; margin: 40px 0;">
+            <h3 style="color: #1e3a8a;">🎯 O QUE NOSSO SISTEMA DETECTA</h3>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            st.markdown("""
+            <div style="padding: 20px; background: white; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                <div style="font-size: 2em; text-align: center; margin-bottom: 10px;">📅</div>
+                <h4 style="text-align: center; color: #1e3a8a;">Reajuste Ilegal</h4>
+                <p style="text-align: center; color: #6b7280; font-size: 0.9em;">
+                    Reajuste trimestral, mensal ou semestral
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col2:
+            st.markdown("""
+            <div style="padding: 20px; background: white; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                <div style="font-size: 2em; text-align: center; margin-bottom: 10px;">🔒</div>
+                <h4 style="text-align: center; color: #1e3a8a;">Garantia Dupla</h4>
+                <p style="text-align: center; color: #6b7280; font-size: 0.9em;">
+                    Exigência de fiador E caução simultaneamente
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col3:
+            st.markdown("""
+            <div style="padding: 20px; background: white; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                <div style="font-size: 2em; text-align: center; margin-bottom: 10px;">🏗️</div>
+                <h4 style="text-align: center; color: #1e3a8a;">Benfeitorias</h4>
+                <p style="text-align: center; color: #6b7280; font-size: 0.9em;">
+                    Renúncia ilegal a direito de indenização
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        st.markdown("""
+        <div style="text-align: center; margin: 40px 0; padding: 20px; background: #eff6ff; border-radius: 10px;">
+            <h4 style="color: #1e40af;">⚖️ Base Legal</h4>
+            <p style="color: #4b5563;">
+                Nosso sistema utiliza a Lei 8.245/91 (Lei do Inquilinato), 
+                Lei 10.192/01 e o Código de Defesa do Consumidor para identificar
+                cláusulas abusivas e ilegais.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+if __name__ == "__main__":
+    main()
