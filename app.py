@@ -5,135 +5,132 @@ import pandas as pd
 from datetime import datetime
 
 # --------------------------------------------------
-# CONFIGURAÇÃO DA PÁGINA
+# CONFIGURAÇÃO DE DESIGN PREMIUM
 # --------------------------------------------------
-st.set_page_config(
-    page_title="Burocrata de Bolso",
-    page_icon="📄",
-    layout="wide"
-)
+st.set_page_config(page_title="Burocrata de Bolso", page_icon="⚖️", layout="wide")
 
+# CSS Customizado para transformar o visual do Streamlit
 st.markdown("""
     <style>
-    .stExpander { border: 1px solid #f0f2f6; border-radius: 10px; }
-    .main-score { font-size: 24px; font-weight: bold; color: #2e7d32; }
+    /* Fundo e Fonte */
+    .main { background-color: #f8f9fa; }
+    
+    /* Customização dos Cards de Problemas */
+    .status-card {
+        padding: 20px;
+        border-radius: 15px;
+        border-left: 5px solid #1e3a8a;
+        background-color: white;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        margin-bottom: 20px;
+    }
+    
+    /* Estilo do Título Principal */
+    .main-title {
+        color: #1e3a8a;
+        font-family: 'Helvetica Neue', sans-serif;
+        font-weight: 800;
+        letter-spacing: -1px;
+    }
+    
+    /* Botões Customizados */
+    .stButton>button {
+        width: 100%;
+        border-radius: 8px;
+        height: 3em;
+        background-color: #1e3a8a;
+        color: white;
+        border: none;
+        transition: 0.3s;
+    }
+    .stButton>button:hover {
+        background-color: #2563eb;
+        border: none;
+        color: white;
+    }
     </style>
     """, unsafe_allow_html=True)
 
-st.title("📄 Burocrata de Bolso")
-st.caption("O Conciliador: Transformando contratos complexos em acordos justos.")
-
 # --------------------------------------------------
-# MOTOR DE ANÁLISE (CÉREBRO DO APP)
+# LÓGICA DE ANÁLISE (O Cérebro)
 # --------------------------------------------------
 
 def buscar_padroes(texto):
     problemas = []
     texto = texto.lower()
 
-    # 1. Garantia Dupla
-    if re.search(r"fiador.*(caução|depósito|seguro|título)", texto, re.DOTALL) or \
-       re.search(r"(caução|depósito|seguro|título).*fiador", texto, re.DOTALL):
-        problemas.append({
-            "nome": "Garantia Dupla",
-            "gravidade": "RED",
-            "emoji": "🚫",
-            "explicacao": "A lei proíbe exigir mais de uma garantia (ex: Fiador + Caução).",
-            "lei": "Art. 37, Parágrafo Único, Lei 8.245/91"
-        })
+    regras = [
+        {"id": "guarantee", "regex": r"fiador.*(caução|depósito|seguro|título)|(caução|depósito|seguro|título).*fiador", "nome": "Garantia Dupla", "gravidade": "RED", "emoji": "🚫", "exp": "A lei proíbe exigir mais de uma garantia. Isso anula a cláusula.", "lei": "Art. 37, Lei 8.245/91"},
+        {"id": "fees", "regex": r"taxa.*(elaboração|confecção|contrato|cadastro|adm|reserva)", "nome": "Taxas de Intermediação", "gravidade": "RED", "emoji": "💸", "exp": "Taxas de contrato são custos do proprietário, não do inquilino.", "lei": "Art. 22, VII, Lei 8.245/91"},
+        {"id": "proportion", "regex": r"multa.*(3|três).*alugue", "check_not": "proporcional", "nome": "Multa Rescisória", "gravidade": "RED", "emoji": "⚠️", "exp": "A multa deve ser sempre proporcional ao tempo restante.", "lei": "Art. 4º da Lei 8.245/91"},
+        {"id": "reserve", "regex": r"fundo.*reserva|despesas.*extraordinária", "nome": "Fundo de Reserva", "gravidade": "YELLOW", "emoji": "🏢", "exp": "Despesas extraordinárias de condomínio cabem ao locador.", "lei": "Art. 22, Parágrafo Único, Lei 8.245/91"}
+    ]
 
-    # 2. Taxas Administrativas
-    if re.search(r"taxa.*(elaboração|confecção|contrato|cadastro|adm|reserva)", texto):
-        problemas.append({
-            "nome": "Taxas de Intermediação",
-            "gravidade": "RED",
-            "emoji": "💸",
-            "explicacao": "Taxas de elaboração de contrato e cadastro devem ser pagas pelo proprietário.",
-            "lei": "Art. 22, VII, Lei 8.245/91"
-        })
-
-    # 3. Multa Rescisória Sem Proporcionalidade
-    if re.search(r"multa.*(3|três).*alugue", texto) and not re.search(r"proporcional", texto):
-        problemas.append({
-            "nome": "Multa Rescisória sem Proporcionalidade",
-            "gravidade": "RED",
-            "emoji": "⚠️",
-            "explicacao": "A multa rescisória deve ser sempre proporcional ao tempo restante do contrato.",
-            "lei": "Art. 4º da Lei 8.245/91"
-        })
-
-    # 4. Fundo de Reserva
-    if re.search(r"fundo.*reserva|despesas.*extraordinária", texto):
-        problemas.append({
-            "nome": "Fundo de Reserva / Despesas Extraordinárias",
-            "gravidade": "YELLOW",
-            "emoji": "🏢",
-            "explicacao": "O fundo de reserva e obras estruturais são obrigações do locador.",
-            "lei": "Art. 22, Parágrafo Único, Lei 8.245/91"
-        })
-
+    for r in regras:
+        found = re.search(r["regex"], texto, re.DOTALL)
+        if found:
+            if "check_not" in r and r["check_not"] in texto: continue
+            problemas.append(r)
     return problemas
 
-def calcular_score(problemas):
-    score = 100
-    for p in problemas:
-        if p["gravidade"] == "RED": score -= 25
-        elif p["gravidade"] == "YELLOW": score -= 10
-    return max(score, 0)
-
-def gerar_contraproposta(problemas):
-    data_atual = datetime.now().strftime("%d/%m/%Y")
-    texto = f"À IMOBILIÁRIA / AO PROPRIETÁRIO\n\nAssunto: Solicitação de Revisão de Cláusulas Contratuais\nData: {data_atual}\n\nPrezados,\n\nApós análise minuciosa da minuta do contrato de locação, gostaria de solicitar a revisão de alguns pontos que divergem da Lei do Inquilinato (Lei 8.245/91), visando garantir o equilíbrio jurídico da relação:\n\n"
-    
-    for p in problemas:
-        texto += f"• {p['nome']}: Identifiquei previsão contrária ao {p['lei']}. {p['explicacao']}\n"
-    
-    texto += "\nCerto da vossa compreensão e buscando uma resolução amigável para procedermos com a assinatura, aguardo o envio da minuta retificada.\n\nAtenciosamente,\n[Seu Nome]"
-    return texto
-
 # --------------------------------------------------
-# UI PRINCIPAL
+# INTERFACE
 # --------------------------------------------------
-col_main, col_info = st.columns([2, 1])
 
-with col_main:
-    uploaded_file = st.file_uploader("📎 Faça upload do contrato (PDF)", type=["pdf"])
+with st.container():
+    st.markdown("<h1 class='main-title'>⚖️ Burocrata de Bolso</h1>", unsafe_allow_html=True)
+    st.markdown("#### O seu aliado contra cláusulas abusivas e letras miúdas.")
+    st.write("---")
 
+col_l, col_r = st.columns([2, 1])
+
+with col_l:
+    uploaded_file = st.file_uploader("📂 Arraste seu contrato em PDF aqui", type=["pdf"])
+    
     if uploaded_file:
-        with st.spinner("Analisando..."):
+        with st.spinner("Analisando segurança jurídica..."):
             with pdfplumber.open(uploaded_file) as pdf:
-                texto_contrato = "".join([p.extract_text() or "" for p in pdf.pages]).lower()
+                full_text = "".join([p.extract_text() or "" for p in pdf.pages]).lower()
             
-            problemas = buscar_padroes(texto_contrato)
-            score = calcular_score(problemas)
+            problemas = buscar_padroes(full_text)
+            score = max(100 - (len([p for p in problemas if p['gravidade'] == 'RED']) * 25) - (len([p for p in problemas if p['gravidade'] == 'YELLOW']) * 10), 0)
 
-            st.subheader(f"📊 Score de Saúde: {score}/100")
+            # Dashboard de Score
+            st.markdown(f"<div style='background-color: white; padding: 20px; border-radius: 15px; border: 1px solid #e2e8f0;'>", unsafe_allow_html=True)
+            st.write(f"### Score de Proteção: **{score}/100**")
             st.progress(score / 100)
+            st.markdown("</div><br>", unsafe_allow_html=True)
 
             if problemas:
-                st.write("### Itens detectados:")
-                for idx, p in enumerate(problemas):
+                for p in problemas:
                     with st.expander(f"{p['emoji']} {p['nome']}"):
-                        st.write(p['explicacao'])
-                        st.caption(f"Base: {p['lei']}")
+                        st.write(f"**O Diagnóstico:** {p['exp']}")
+                        st.caption(f"📍 Base Legal: {p['lei']}")
+                        
+                        st.markdown("**Copie para o WhatsApp:**")
+                        txt = f"Olá, notei no contrato a cláusula de {p['nome']}. De acordo com o {p['lei']}, esse ponto precisa ser ajustado. Podemos revisar?"
+                        st.code(txt, language="text")
                 
-                # NOVIDADE: GERADOR DE CONTRAPROPOSTA
-                st.markdown("---")
-                st.subheader("📝 Resolver de Vez")
-                if st.button("Gerar Contraproposta Formal"):
-                    texto_final = gerar_contraproposta(problemas)
-                    st.text_area("Copie o texto abaixo para enviar por e-mail:", texto_final, height=300)
-                    st.download_button("Baixar como Arquivo de Texto", texto_final, file_name="contraproposta.txt")
+                if st.button("✨ Gerar E-mail de Contraproposta"):
+                    data = datetime.now().strftime("%d/%m/%Y")
+                    corpo = f"Prezados,\n\nSolicito a revisão do contrato (Data: {data}) nos seguintes pontos:\n"
+                    for p in problemas: corpo += f"- {p['nome']}: Divergência com {p['lei']}.\n"
+                    corpo += "\nNo aguardo da minuta corrigida.\nAtenciosamente."
+                    st.text_area("E-mail pronto:", corpo, height=200)
             else:
-                st.success("Nenhum problema comum encontrado!")
+                st.success("✅ Contrato limpo! Nenhuma das abusividades comuns foi detectada.")
 
-with col_info:
-    st.sidebar.header("🛌 Modo Sono")
-    data_inicio = st.sidebar.date_input("Início do Contrato", datetime.now())
-    if st.sidebar.button("Ativar Guardião"):
-        st.sidebar.success("Guardado! Te aviso no reajuste.")
+with col_r:
+    st.markdown("""
+        <div style='background-color: #eef2ff; padding: 20px; border-radius: 15px;'>
+            <h4 style='color: #1e3a8a;'>🛡️ Modo Guardião</h4>
+            <p style='font-size: 0.9em;'>Não se preocupe com reajustes surpresa. Ative o monitoramento e nós avisamos você.</p>
+        </div>
+    """, unsafe_allow_html=True)
     
-    st.info("O Burocrata foca em conciliação. Use os textos gerados para negociar sem stress.")
+    data_in = st.date_input("Início da Locação", datetime.now())
+    if st.button("Ativar Monitoramento"):
+        st.balloons()
+        st.success("Guardião ativado!")
 
-st.markdown("---")
-st.caption("Burocrata de Bolso 2026 - O seu direito, simplificado.")
+st.markdown("<br><p style='text-align: center; color: #94a3b8;'>Burocrata de Bolso © 2026</p>", unsafe_allow_html=True)
