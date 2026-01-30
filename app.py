@@ -184,6 +184,23 @@ st.markdown("""
         font-size: 12px;
         font-weight: 600;
     }
+    
+    /* Ícones específicos para cada tipo de documento */
+    .doc-icon-locacao {
+        color: #2c5282;
+    }
+    
+    .doc-icon-nfe {
+        color: #38a169;
+    }
+    
+    .doc-icon-servico {
+        color: #d69e2e;
+    }
+    
+    .doc-icon-compra-venda {
+        color: #9b2c2c;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -200,15 +217,19 @@ class DocumentTypeDetector:
         
         indicadores = {
             'contrato_locacao': ['contrato de locação', 'locador', 'locatário', 'aluguel', 'imóvel', 
-                                 'termos de locação', 'cláusula', 'vigência', 'fiador', 'caução'],
+                                 'termos de locação', 'cláusula', 'vigência', 'fiador', 'caução',
+                                 'valor do aluguel', 'reajuste anual'],
             'nota_fiscal': ['nota fiscal', 'nfe', 'nf-e', 'chave de acesso', 'emitente', 'destinatário',
-                           'cnpj', 'icms', 'ipi', 'danfe', 'número da nota', 'modelo 55'],
+                           'cnpj', 'icms', 'ipi', 'danfe', 'número da nota', 'modelo 55', 'valor total'],
             'contrato_servico': ['contrato de prestação de serviços', 'contratante', 'contratada', 
                                 'objeto do contrato', 'escopo dos serviços', 'fornecimento de serviços',
                                 'prestador de serviços', 'tomador de serviços', 'serviços contratados',
                                 'cláusulas do contrato', 'prazo de execução', 'valor dos serviços'],
-            'contrato_compra_venda': ['contrato de compra e venda', 'vendedor', 'comprador', 
-                                     'alienante', 'adquirente', 'imóvel objeto', 'preço total']
+            'contrato_compra_venda': ['contrato de compra e venda', 'contrato de compra e venda de imóvel',
+                                     'vendedor', 'comprador', 'alienante', 'adquirente', 
+                                     'imóvel objeto deste contrato', 'matrícula', 'registro do imóvel',
+                                     'preço total', 'sinal', 'entrada', 'financiamento', 'cartório',
+                                     'itbi', 'escritura pública', 'registro de imóveis']
         }
         
         contagem = {tipo: 0 for tipo in indicadores.keys()}
@@ -523,6 +544,243 @@ class ContratoServicoAnalyser:
         return problemas, info_contrato
 
 # --------------------------------------------------
+# ANALISADOR DE CONTRATOS DE COMPRA E VENDA DE IMÓVEIS
+# --------------------------------------------------
+
+class ContratoCompraVendaAnalyser:
+    """Analisa contratos de compra e venda de imóveis"""
+    
+    def __init__(self):
+        self.tipo = "contrato_compra_venda"
+        
+        # Regras de auditoria específicas para contratos de compra e venda
+        self.regras = [
+            {
+                "id": "cv_imovel_nao_identificado",
+                "regex": r"(im[oó]vel|propriedade|bem).*?(indefinido|n[ãa]o identificado|n[ãa]o descrito|gen[ée]rico)",
+                "nome": "Imóvel Não Identificado",
+                "gravidade": "critico",
+                "exp": "O imóvel deve ser perfeitamente identificado com matrícula, endereço completo, metragem e confrontações.",
+                "lei": "Art. 108, I, Código Civil e Art. 1º, Lei 6.015/73 (Lei de Registros Públicos)"
+            },
+            {
+                "id": "cv_sem_matricula",
+                "regex": r"(matr[íi]cula|registro|n[úu]mero).*?(n[ãa]o informado|ausente|omitido)",
+                "nome": "Falta de Número de Matrícula",
+                "gravidade": "critico",
+                "exp": "Todo imóvel deve ter número de matrícula no Registro de Imóveis. Contrato sem essa informação é inválido.",
+                "lei": "Art. 167, Lei 6.015/73"
+            },
+            {
+                "id": "cv_preco_nao_definido",
+                "regex": r"(pre[çc]o|valor).*?(a combinar|a definir|ser[áa] definido|posteriormente)",
+                "nome": "Preço Não Definido",
+                "gravidade": "critico",
+                "exp": "O preço deve ser certo e determinado. Cláusulas que deixam para definir posteriormente tornam o contrato nulo.",
+                "lei": "Art. 426, Código Civil"
+            },
+            {
+                "id": "cv_multa_penal_desproporcional",
+                "regex": r"(multa.*?penal|cl[áa]usula.*?penal).*?(50|60|70|80|90|100).*?por cento",
+                "nome": "Multa Penal Desproporcional",
+                "gravidade": "critico",
+                "exp": "Multas superiores a 30% do valor do imóvel podem ser consideradas abusivas e passíveis de revisão judicial.",
+                "lei": "Art. 413, Código Civil e jurisprudência do STJ"
+            },
+            {
+                "id": "cv_renuncia_direitos_essenciais",
+                "regex": r"(renuncia|abdica).*?(direito.*?(evic[çc][ãa]o|vicio.*?oculto|garantia))",
+                "nome": "Renúncia a Direitos Essenciais",
+                "gravidade": "critico",
+                "exp": "O comprador não pode renunciar aos direitos de evicção e vícios ocultos. Cláusula é nula.",
+                "lei": "Art. 441, Código Civil"
+            },
+            {
+                "id": "cv_entrega_chaves_nao_definida",
+                "regex": r"(entrega.*?chaves|posse).*?(indefinida|a combinar|quando.*?poss[íi]vel)",
+                "nome": "Entrega de Chaves Indefinida",
+                "gravidade": "medio",
+                "exp": "A data de entrega das chaves e da posse deve ser certa e determinada.",
+                "lei": "Art. 426, Código Civil"
+            },
+            {
+                "id": "cv_responsabilidade_tributaria_ambigua",
+                "regex": r"(tributos|impostos|taxas).*?(ambos|comprador.*?vendedor|partilhado)",
+                "nome": "Responsabilidade Tributária Ambígua",
+                "gravidade": "medio",
+                "exp": "Deve estar claro quem paga cada tributo (ITBI, Registro, etc.). Ambiguidades geram conflitos.",
+                "lei": "Art. 1.078, Código Civil"
+            },
+            {
+                "id": "cv_clausula_arrocho",
+                "regex": r"(arrocho|vincula|obriga).*?(terceiro|familiares|herdeiros)",
+                "nome": "Cláusula de Arrocho",
+                "gravidade": "critico",
+                "exp": "Cláusulas que vinculam terceiros não signatários do contrato são nulas.",
+                "lei": "Art. 426, Código Civil e Princípio da Relatividade Contratual"
+            },
+            {
+                "id": "cv_foro_distante",
+                "regex": r"(foro|comarca|ju[íi]zo).*?(distante|inacess[íi]vel|outro.*?munic[íi]pio)",
+                "nome": "Foro de Eleição Inacessível",
+                "gravidade": "medio",
+                "exp": "Foro em local distante da situação do imóvel pode ser considerado abusivo.",
+                "lei": "Art. 78, Código de Processo Civil"
+            },
+            {
+                "id": "cv_financiamento_condicionado",
+                "regex": r"(financiamento|empr[ée]stimo).*?(condicionado|incerto|n[ãa]o garantido)",
+                "nome": "Financiamento Não Garantido",
+                "gravidade": "medio",
+                "exp": "Se a compra depende de financiamento, deve haver cláusula resolutiva expressa caso seja negado.",
+                "lei": "Art. 474, Código Civil"
+            },
+            {
+                "id": "cv_pendencia_nao_resolvida",
+                "regex": r"(pend[êe]ncia|[ôo]nus|gravame).*?(n[ãa]o resolvido|pendente|existente)",
+                "nome": "Pendências Não Resolvidas",
+                "gravidade": "critico",
+                "exp": "O imóvel deve estar livre de ônus, gravames e ações judiciais na data da escritura.",
+                "lei": "Art. 1.345, Código Civil"
+            },
+            {
+                "id": "cv_sem_laudo_vistoria",
+                "regex": r"(vistoria|laudo|avalia[çc][ãa]o).*?(n[ãa]o.*?realizada|dispensada|n[ãa]o necess[áa]ria)",
+                "nome": "Ausência de Vistoria Prévia",
+                "gravidade": "leve",
+                "exp": "Recomenda-se sempre vistoria técnica prévia para identificar possíveis vícios.",
+                "lei": "Art. 441, Código Civil"
+            },
+            {
+                "id": "cv_prazo_escritura_indefinido",
+                "regex": r"(escritura|registro).*?(prazo|data).*?(indefinido|a combinar|flex[íi]vel)",
+                "nome": "Prazo para Escritura Indefinido",
+                "gravidade": "medio",
+                "exp": "O prazo para lavratura da escritura pública deve ser determinado.",
+                "lei": "Art. 426, Código Civil"
+            }
+        ]
+        
+        # Padrões para extração de informações
+        self.padroes_extracao = {
+            'vendedor': r'VENDEDOR.*?(?::|\n)\s*(.+?)(?:\n|\.)',
+            'comprador': r'COMPRADOR.*?(?::|\n)\s*(.+?)(?:\n|\.)',
+            'valor_imovel': r'VALOR.*?(?::|\n)\s*R?\$?\s*([\d.,]+)',
+            'matricula': r'MATR[ÍI]CULA.*?(?::|\n)\s*(\w+.*?)(?:\n|\.)',
+            'endereco_imovel': r'ENDERE[ÇC]O.*?(?::|\n)\s*(.+?)(?:\n|\.)',
+            'sinal': r'SINAL.*?(?::|\n)\s*R?\$?\s*([\d.,]+)',
+            'prazo_escritura': r'PRAZO.*?ESCRITURA.*?(?::|\n)\s*(.+?)(?:\n|\.)',
+            'data_entrega': r'ENTREGA.*?CHAVES.*?(?::|\n)\s*(.+?)(?:\n|\.)'
+        }
+    
+    def extrair_informacoes_contrato(self, texto):
+        """Extrai informações importantes do contrato"""
+        info = {}
+        
+        for campo, padrao in self.padroes_extracao.items():
+            match = re.search(padrao, texto, re.IGNORECASE | re.MULTILINE)
+            if match:
+                info[campo] = match.group(1).strip()
+            else:
+                info[campo] = None
+        
+        # Verificar se é contrato com financiamento
+        financiamento_match = re.search(r'FINANCIAMENTO|EMPR[ÉE]STIMO', texto, re.IGNORECASE)
+        info['tem_financiamento'] = bool(financiamento_match)
+        
+        # Extrair cláusulas numeradas
+        clausulas = re.findall(r'CL[ÁA]USULA\s+(\w+)[\.:]\s*(.+?)(?=\nCL[ÁA]USULA|\n\d|\Z)', 
+                              texto, re.IGNORECASE | re.DOTALL)
+        info['total_clausulas'] = len(clausulas)
+        
+        return info
+    
+    def analisar_contrato(self, texto_completo):
+        """Realiza análise completa do contrato de compra e venda"""
+        problemas = []
+        problemas_ja_encontrados = set()
+        
+        texto_normalizado = normalizar_texto(texto_completo)
+        
+        # Análise por regras
+        for regra in self.regras:
+            matches = list(re.finditer(regra["regex"], texto_normalizado, re.IGNORECASE))
+            
+            if matches:
+                for match in matches:
+                    chave_duplicata = f"{regra['id']}_{match.start()}"
+                    if chave_duplicata not in problemas_ja_encontrados:
+                        inicio = max(0, match.start() - 100)
+                        fim = min(len(texto_normalizado), match.end() + 100)
+                        contexto = texto_normalizado[inicio:fim]
+                        
+                        problema = {
+                            "id": regra["id"],
+                            "nome": regra["nome"],
+                            "gravidade": regra["gravidade"],
+                            "exp": regra["exp"],
+                            "lei": regra["lei"],
+                            "contexto": f"...{contexto}..." if contexto else "",
+                            "pagina": 1
+                        }
+                        
+                        problemas.append(problema)
+                        problemas_ja_encontrados.add(chave_duplicata)
+        
+        # Análises contextuais adicionais
+        info_contrato = self.extrair_informacoes_contrato(texto_completo)
+        
+        # Verificar se o preço está definido numericamente
+        if info_contrato.get('valor_imovel'):
+            if re.search(r'a combinar|a definir|ser[áa] definido', info_contrato['valor_imovel'], re.IGNORECASE):
+                problemas.append({
+                    "id": "cv_preco_textual",
+                    "nome": "Preço em Formato Textual",
+                    "gravidade": "critico",
+                    "exp": "O preço deve ser expresso em valor numérico, não em descrição textual.",
+                    "lei": "Art. 426, Código Civil",
+                    "contexto": f"Preço encontrado: {info_contrato['valor_imovel']}",
+                    "pagina": 1
+                })
+        
+        # Verificar se há matrícula
+        if not info_contrato.get('matricula'):
+            problemas.append({
+                "id": "cv_sem_matricula_detectado",
+                "nome": "Matrícula Não Encontrada",
+                "gravidade": "critico",
+                "exp": "Não foi possível identificar o número de matrícula do imóvel no contrato.",
+                "lei": "Art. 167, Lei 6.015/73",
+                "contexto": "Verifique se a matrícula está mencionada no documento",
+                "pagina": 1
+            })
+        
+        # Verificar sinal vs valor total
+        if info_contrato.get('sinal') and info_contrato.get('valor_imovel'):
+            try:
+                sinal_valor = float(info_contrato['sinal'].replace('.', '').replace(',', '.'))
+                valor_total = float(info_contrato['valor_imovel'].replace('.', '').replace(',', '.'))
+                percentual_sinal = (sinal_valor / valor_total) * 100
+                
+                if percentual_sinal > 30:
+                    problemas.append({
+                        "id": "cv_sinal_excessivo",
+                        "nome": "Sinal Excessivo",
+                        "gravidade": "medio",
+                        "exp": f"Sinal de {percentual_sinal:.1f}% do valor total. Valores acima de 30% podem ser considerados excessivos.",
+                        "lei": "Jurisprudência consumerista",
+                        "contexto": f"Sinal: R$ {sinal_valor:.2f} | Valor total: R$ {valor_total:.2f}",
+                        "pagina": 1
+                    })
+            except:
+                pass
+        
+        # Ordenar por gravidade (crítico primeiro)
+        problemas.sort(key=lambda x: 0 if x['gravidade'] == 'critico' else 1 if x['gravidade'] == 'medio' else 2)
+        
+        return problemas, info_contrato
+
+# --------------------------------------------------
 # FUNÇÕES AUXILIARES
 # --------------------------------------------------
 
@@ -539,6 +797,16 @@ def obter_cor_gravidade(gravidade):
         return '#d69e2e'  # Amarelo/laranja
     else:
         return '#38a169'  # Verde
+
+def obter_icone_documento(tipo_doc):
+    icones = {
+        'contrato_locacao': '🏠',
+        'nota_fiscal': '🧾',
+        'contrato_servico': '⚖️',
+        'contrato_compra_venda': '💰',
+        'desconhecido': '📄'
+    }
+    return icones.get(tipo_doc, '📄')
 
 # --------------------------------------------------
 # LÓGICA DE AUDITORIA PARA CONTRATO DE LOCAÇÃO
@@ -657,6 +925,12 @@ def realizar_auditoria_total(arquivo_pdf):
         st.session_state['info_contrato_servico'] = info_contrato
         return problemas, tipo_documento
     
+    elif tipo_documento == 'contrato_compra_venda':
+        analisador_compra_venda = ContratoCompraVendaAnalyser()
+        problemas, info_contrato = analisador_compra_venda.analisar_contrato(texto_completo)
+        st.session_state['info_contrato_cv'] = info_contrato
+        return problemas, tipo_documento
+    
     elif tipo_documento == 'desconhecido':
         return [], tipo_documento
     
@@ -681,7 +955,7 @@ with col_upload:
     arquivo = st.file_uploader(
         "Selecione um documento em formato PDF",
         type=["pdf"],
-        help="Documentos suportados: Contratos de locação, Notas Fiscais Eletrônicas, Contratos de Serviços"
+        help="Documentos suportados: Contratos de locação, Notas Fiscais Eletrônicas, Contratos de Serviços, Contratos de Compra e Venda"
     )
     
     if arquivo:
@@ -702,7 +976,16 @@ with col_status:
         achados = st.session_state.get('achados', [])
         tipo_doc = st.session_state.get('tipo_doc', 'desconhecido')
         
-        penalidade = min(len(achados) * 15, 100)
+        # Cálculo de score adaptado ao tipo de documento
+        if tipo_doc == 'contrato_compra_venda':
+            # Contratos de compra e venda são mais críticos
+            penalidade_critico = sum(1 for a in achados if a.get('gravidade') == 'critico') * 25
+            penalidade_medio = sum(1 for a in achados if a.get('gravidade') == 'medio') * 15
+            penalidade_leve = sum(1 for a in achados if a.get('gravidade') == 'leve') * 5
+            penalidade = min(penalidade_critico + penalidade_medio + penalidade_leve, 100)
+        else:
+            penalidade = min(len(achados) * 15, 100)
+        
         score = max(100 - penalidade, 0)
         
         st.markdown("**Índice de Conformidade**")
@@ -719,7 +1002,8 @@ with col_status:
         
         st.progress(score / 100)
         
-        st.markdown(f"**Documento:** {tipo_doc.replace('_', ' ').title()}")
+        icone = obter_icone_documento(tipo_doc)
+        st.markdown(f"**Documento:** {icone} {tipo_doc.replace('_', ' ').title()}")
         st.markdown(f"**Problemas:** {len(achados)}")
     else:
         st.markdown("**Índice de Conformidade**")
@@ -747,7 +1031,9 @@ if st.session_state.get('analisado', False):
         with col_summary:
             st.markdown('<div class="info-card">', unsafe_allow_html=True)
             st.markdown("**Sumário Executivo**")
-            st.markdown(f"- Tipo: {tipo_doc.replace('_', ' ').title()}")
+            
+            icone = obter_icone_documento(tipo_doc)
+            st.markdown(f"- Tipo: {icone} {tipo_doc.replace('_', ' ').title()}")
             st.markdown(f"- Total de problemas: {len(achados)}")
             
             if tipo_doc == 'contrato_locacao':
@@ -759,9 +1045,12 @@ if st.session_state.get('analisado', False):
             elif tipo_doc == 'contrato_servico':
                 st.markdown("- Área: Direito Civil e Consumerista")
                 st.markdown("- Legislação: Código Civil e CDC")
+            elif tipo_doc == 'contrato_compra_venda':
+                st.markdown("- Área: Direito Imobiliário e Registral")
+                st.markdown("- Legislação: Código Civil e Lei 6.015/73")
             
-            # Estatísticas por gravidade (para contratos de serviço)
-            if tipo_doc == 'contrato_servico':
+            # Estatísticas por gravidade (para documentos com sistema de gravidade)
+            if tipo_doc in ['contrato_servico', 'contrato_compra_venda']:
                 criticos = sum(1 for a in achados if a.get('gravidade') == 'critico')
                 medios = sum(1 for a in achados if a.get('gravidade') == 'medio')
                 leves = sum(1 for a in achados if a.get('gravidade') == 'leve')
@@ -789,6 +1078,24 @@ if st.session_state.get('analisado', False):
                         st.markdown(f"**Prazo:** {info['prazo_execucao']}")
                     if info.get('total_clausulas'):
                         st.markdown(f"**Cláusulas:** {info['total_clausulas']}")
+            
+            elif tipo_doc == 'contrato_compra_venda' and 'info_contrato_cv' in st.session_state:
+                info = st.session_state['info_contrato_cv']
+                with st.expander("🏠 Informações do Imóvel"):
+                    if info.get('vendedor'):
+                        st.markdown(f"**Vendedor:** {info['vendedor']}")
+                    if info.get('comprador'):
+                        st.markdown(f"**Comprador:** {info['comprador']}")
+                    if info.get('valor_imovel'):
+                        st.markdown(f"**Valor do Imóvel:** R$ {info['valor_imovel']}")
+                    if info.get('matricula'):
+                        st.markdown(f"**Matrícula:** {info['matricula']}")
+                    if info.get('endereco_imovel'):
+                        st.markdown(f"**Endereço:** {info['endereco_imovel']}")
+                    if info.get('sinal'):
+                        st.markdown(f"**Sinal:** R$ {info['sinal']}")
+                    if info.get('tem_financiamento'):
+                        st.markdown("**Financiamento:** Sim")
         
         with col_details:
             for a in achados:
@@ -799,11 +1106,14 @@ if st.session_state.get('analisado', False):
                 elif a.get('gravidade') == 'medio':
                     border_color = '#d69e2e'
                     tag_html = '<span class="tag-medio">MÉDIO</span>'
-                else:
+                elif a.get('gravidade') == 'leve':
                     border_color = '#38a169'
                     tag_html = '<span class="tag-leve">LEVE</span>'
+                else:
+                    border_color = '#2c5282'
+                    tag_html = ''
                 
-                with st.expander(f"{a['nome']} {tag_html if a.get('gravidade') else ''}", unsafe_allow_html=True):
+                with st.expander(f"{a['nome']} {tag_html}", unsafe_allow_html=True):
                     st.markdown(f"**Descrição:** {a['exp']}")
                     st.markdown(f"**Fundamento Legal:** {a.get('lei', 'Não especificado')}")
                     
@@ -855,6 +1165,21 @@ if st.session_state.get('analisado', False):
                     if info.get('prazo_execucao'):
                         st.markdown(f"**Prazo:** {info['prazo_execucao']}")
         
+        elif tipo_doc == 'contrato_compra_venda':
+            st.markdown("✅ O contrato de compra e venda analisado não apresenta irregularidades críticas nas cláusulas verificadas.")
+            
+            if 'info_contrato_cv' in st.session_state:
+                info = st.session_state['info_contrato_cv']
+                with st.expander("🏠 Informações do Imóvel"):
+                    if info.get('vendedor'):
+                        st.markdown(f"**Vendedor:** {info['vendedor']}")
+                    if info.get('comprador'):
+                        st.markdown(f"**Comprador:** {info['comprador']}")
+                    if info.get('valor_imovel'):
+                        st.markdown(f"**Valor do Imóvel:** R$ {info['valor_imovel']}")
+                    if info.get('matricula'):
+                        st.markdown(f"**Matrícula:** {info['matricula']}")
+        
         else:
             st.markdown("✅ O documento analisado não apresenta irregularidades nos padrões verificados.")
         
@@ -876,21 +1201,24 @@ with col_console:
         achados = st.session_state.get('achados', [])
         tipo_doc = st.session_state.get('tipo_doc', 'desconhecido')
         
-        st.markdown(f"[INFO] Tipo de documento: {tipo_doc}")
+        icone = obter_icone_documento(tipo_doc)
+        st.markdown(f"[INFO] Tipo de documento: {icone} {tipo_doc}")
         st.markdown(f"[INFO] Problemas encontrados: {len(achados)}")
         
-        if tipo_doc == 'contrato_servico':
-            # Estatísticas detalhadas para contratos de serviço
+        if tipo_doc in ['contrato_servico', 'contrato_compra_venda']:
+            # Estatísticas detalhadas para documentos com sistema de gravidade
             criticos = sum(1 for a in achados if a.get('gravidade') == 'critico')
             medios = sum(1 for a in achados if a.get('gravidade') == 'medio')
             leves = sum(1 for a in achados if a.get('gravidade') == 'leve')
             
             st.markdown(f"[STATS] Críticos: {criticos} | Médios: {medios} | Leves: {leves}")
             
-            if 'info_contrato_servico' in st.session_state:
-                info = st.session_state['info_contrato_servico']
-                if info.get('total_clausulas'):
-                    st.markdown(f"[INFO] Total de cláusulas identificadas: {info['total_clausulas']}")
+            if tipo_doc == 'contrato_compra_venda' and 'info_contrato_cv' in st.session_state:
+                info = st.session_state['info_contrato_cv']
+                if info.get('matricula'):
+                    st.markdown(f"[INFO] Matrícula identificada: {info['matricula'][:50]}...")
+                if info.get('valor_imovel'):
+                    st.markdown(f"[INFO] Valor do imóvel: R$ {info['valor_imovel']}")
         
         if achados:
             for a in achados:
@@ -899,6 +1227,8 @@ with col_console:
                     prefix = "[ALERTA CRÍTICO]"
                 elif gravidade == 'medio':
                     prefix = "[ALERTA MÉDIO]"
+                elif gravidade == 'leve':
+                    prefix = "[ALERTA LEVE]"
                 else:
                     prefix = "[ALERTA]"
                 
@@ -955,6 +1285,22 @@ with col_assist:
                     else:
                         st.markdown("**Orientação:** Para contratos de serviços, atenção especial às cláusulas abusivas listadas no Art. 51 do Código de Defesa do Consumidor.")
                 
+                elif tipo_doc == 'contrato_compra_venda':
+                    if any(termo in prompt.lower() for termo in ['matrícula', 'registro']):
+                        st.markdown("**Orientação:** A matrícula do imóvel é essencial. Verifique no Cartório de Registro de Imóveis se está regular e sem ônus.")
+                    elif any(termo in prompt.lower() for termo in ['sinal', 'arras']):
+                        st.markdown("**Orientação:** O sinal (arras) confirmatórias em geral fica entre 5% e 30% do valor. Acima de 30% pode ser considerado excessivo.")
+                    elif any(termo in prompt.lower() for termo in ['multa', 'desistência']):
+                        st.markdown("**Orientação:** Multas por desistência em compra e venda geralmente são de 30% do valor. Valores superiores podem ser revisados.")
+                    elif any(termo in prompt.lower() for termo in ['itbi', 'imposto']):
+                        st.markdown("**Orientação:** O ITBI é de responsabilidade do comprador. As taxas de registro são divididas entre as partes, mas é negociável.")
+                    elif any(termo in prompt.lower() for termo in ['escritura', 'cartório']):
+                        st.markdown("**Orientação:** A escritura pública deve ser lavrada em cartório dentro do prazo contratual. Atrasos podem gerar multas.")
+                    elif any(termo in prompt.lower() for termo in ['vício', 'defeito']):
+                        st.markdown("**Orientação:** O vendedor responde por vícios ocultos por 1 ano após a entrega do imóvel, mesmo que não mencionado no contrato.")
+                    else:
+                        st.markdown("**Orientação:** Para contratos de compra e venda, verifique sempre a matrícula, ônus reais e a escrituração. Consulte um advogado especializado.")
+                
                 else:
                     st.markdown("**Orientação:** Recomenda-se análise jurídica especializada para este tipo de documento.")
             else:
@@ -969,31 +1315,34 @@ with st.sidebar:
     st.markdown('<p class="sidebar-title">Módulos Disponíveis</p>', unsafe_allow_html=True)
     
     modulos = {
-        "📑 Contratos de Locação": {
+        "🏠 Contratos de Locação": {
             "status": "ativo",
             "desc": "Análise de 8 cláusulas problemáticas com base na Lei do Inquilinato",
-            "clausulas": "Reajuste, Benfeitorias, Multa, Privacidade, Garantia, Despejo, Venda, Animais"
+            "clausulas": "Reajuste, Benfeitorias, Multa, Privacidade, Garantia, Despejo, Venda, Animais",
+            "icon": "🏠"
         },
         "🧾 Notas Fiscais": {
             "status": "ativo", 
             "desc": "Validação de dados fiscais e conformidade tributária",
-            "clausulas": "Chave de acesso, CNPJ, Data, Valores"
+            "clausulas": "Chave de acesso, CNPJ, Data, Valores",
+            "icon": "🧾"
         },
         "⚖️ Contratos de Serviços": {
             "status": "ativo",
             "desc": "Análise de 13 cláusulas críticas em contratos de prestação de serviços",
-            "clausulas": "Prazo aberto, Multas, Juros, Responsabilidade, Rescisão, Foro, Renúncia"
+            "clausulas": "Prazo aberto, Multas, Juros, Responsabilidade, Rescisão, Foro, Renúncia",
+            "icon": "⚖️"
         },
-        "🏠 Contratos de Compra e Venda": {
-            "status": "em_breve",
-            "desc": "Em desenvolvimento - Disponível em breve",
-            "clausulas": ""
+        "💰 Contratos de Compra e Venda": {
+            "status": "ativo",
+            "desc": "Análise de 13 cláusulas críticas em contratos de compra e venda de imóveis",
+            "clausulas": "Matrícula, Preço, Multa, Evicção, Tributos, Financiamento",
+            "icon": "💰"
         }
     }
     
     for modulo, info in modulos.items():
-        status_indicator = "🟢" if info["status"] == "ativo" else "🟡"
-        st.markdown(f"{status_indicator} **{modulo}**")
+        st.markdown(f"{info['icon']} **{modulo}**")
         st.markdown(f'<div style="font-size: 12px; color: #4a5568; margin-bottom: 10px;">{info["desc"]}</div>', unsafe_allow_html=True)
         
         if info.get("clausulas"):
@@ -1013,8 +1362,22 @@ with st.sidebar:
     
     st.markdown("---")
     
+    st.markdown("**Dicas para Contratos de Compra e Venda**")
+    st.markdown("""
+    <div style="font-size: 12px;">
+    1. Verifique a matrícula no Cartório<br>
+    2. Confirme ônus e ações judiciais<br>
+    3. Defina prazos certos para escritura<br>
+    4. Estabeleça responsabilidades tributárias<br>
+    5. Inclua cláusula de financiamento<br>
+    6. Faça vistoria técnica prévia
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("---")
+    
     st.markdown("**Informações do Sistema**")
-    st.markdown(f'<div style="font-size: 12px; color: #4a5568;">Versão: 9.0</div>', unsafe_allow_html=True)
+    st.markdown(f'<div style="font-size: 12px; color: #4a5568;">Versão: 10.0</div>', unsafe_allow_html=True)
     st.markdown(f'<div style="font-size: 12px; color: #4a5568;">Última atualização: {datetime.now().strftime("%d/%m/%Y")}</div>', unsafe_allow_html=True)
     
     st.markdown("---")
