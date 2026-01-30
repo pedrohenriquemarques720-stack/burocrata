@@ -17,108 +17,286 @@ st.set_page_config(
 )
 
 # --------------------------------------------------
-# ESTILOS PROFISSIONAIS
+# ESTILOS PROFISSIONAIS - TEMA ESCURO COM DOURADO
 # --------------------------------------------------
 st.markdown("""
 <style>
+    /* Fundo preto e texto branco */
+    .stApp {
+        background-color: #000000;
+        color: #ffffff;
+    }
+    
+    /* Títulos e texto geral */
+    h1, h2, h3, h4, h5, h6, p, span, div {
+        color: #ffffff !important;
+    }
+    
+    /* Cabeçalho principal */
     .main-header {
         text-align: center;
-        padding: 20px;
-        background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
-        color: white;
-        border-radius: 10px;
-        margin-bottom: 30px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        padding: 30px;
+        background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+        color: #ffffff;
+        border-radius: 15px;
+        margin-bottom: 40px;
+        box-shadow: 0 10px 30px rgba(212, 175, 55, 0.2);
+        border: 2px solid #d4af37;
     }
     
+    /* Cartões de métricas */
     .metric-card {
-        background: white;
-        padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+        background: rgba(26, 26, 26, 0.9);
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
         text-align: center;
         border-top: 4px solid;
+        border-left: 1px solid #d4af37;
+        border-right: 1px solid #d4af37;
+        transition: transform 0.3s ease;
     }
     
-    .issue-card {
-        padding: 15px;
-        margin: 10px 0;
-        border-radius: 8px;
-        background: white;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        border-left: 5px solid;
+    .metric-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(212, 175, 55, 0.3);
     }
     
-    .critical-card { border-left-color: #ef4444; }
-    .medium-card { border-left-color: #f59e0b; }
-    .low-card { border-left-color: #10b981; }
-    
-    .confidence-badge {
-        display: inline-block;
-        padding: 2px 8px;
-        border-radius: 12px;
-        font-size: 0.75em;
-        font-weight: 600;
-        margin-left: 8px;
-    }
-    
-    .confidence-high { background: #d1fae5; color: #065f46; }
-    .confidence-medium { background: #fef3c7; color: #92400e; }
-    .confidence-low { background: #fee2e2; color: #991b1b; }
-    
-    .upload-container {
-        border: 2px dashed #d1d5db;
-        border-radius: 12px;
-        padding: 40px;
-        text-align: center;
-        background: #f8fafc;
+    /* Cartões de problemas - design simplificado */
+    .problem-card {
+        background: rgba(20, 20, 20, 0.9);
+        padding: 25px;
+        border-radius: 15px;
         margin: 20px 0;
-        transition: all 0.3s;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+        border-left: 5px solid;
+        transition: all 0.3s ease;
     }
     
-    .stat-badge {
+    .problem-card:hover {
+        transform: translateX(5px);
+        box-shadow: 0 8px 25px rgba(212, 175, 55, 0.2);
+    }
+    
+    /* Cores dos problemas */
+    .critical-problem { border-left-color: #ff4444; }
+    .medium-problem { border-left-color: #ffaa44; }
+    .low-problem { border-left-color: #44aaff; }
+    
+    /* Ícones dourados */
+    .gold-icon {
+        color: #d4af37;
+        font-size: 1.8em;
+        margin-right: 15px;
+        text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+    }
+    
+    /* Badges de gravidade */
+    .severity-badge {
         display: inline-block;
-        padding: 4px 12px;
+        padding: 6px 15px;
         border-radius: 20px;
         font-size: 0.85em;
-        font-weight: 600;
-        margin: 2px;
+        font-weight: 700;
+        margin: 5px 10px 5px 0;
+        text-transform: uppercase;
+        letter-spacing: 1px;
     }
     
-    .badge-critical { background: #fee2e2; color: #dc2626; }
-    .badge-medium { background: #fef3c7; color: #d97706; }
-    .badge-low { background: #d1fae5; color: #059669; }
+    .critical-badge {
+        background: linear-gradient(135deg, #ff4444, #cc0000);
+        color: white;
+        border: 1px solid #ff6666;
+    }
     
+    .medium-badge {
+        background: linear-gradient(135deg, #ffaa44, #ff8800);
+        color: white;
+        border: 1px solid #ffbb66;
+    }
+    
+    .low-badge {
+        background: linear-gradient(135deg, #44aaff, #0088ff);
+        color: white;
+        border: 1px solid #66bbff;
+    }
+    
+    /* Badge de confiança */
+    .confidence-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 15px;
+        font-size: 0.8em;
+        font-weight: 600;
+        margin-left: 10px;
+        background: rgba(212, 175, 55, 0.2);
+        color: #d4af37;
+        border: 1px solid #d4af37;
+    }
+    
+    /* Container de upload */
+    .upload-container {
+        border: 3px dashed #d4af37;
+        border-radius: 20px;
+        padding: 60px 40px;
+        text-align: center;
+        background: rgba(26, 26, 26, 0.7);
+        margin: 30px 0;
+        transition: all 0.3s;
+        backdrop-filter: blur(10px);
+    }
+    
+    .upload-container:hover {
+        background: rgba(40, 40, 40, 0.7);
+        border-color: #e6c158;
+    }
+    
+    /* Barra de progresso customizada */
     .progress-bar-container {
-        height: 20px;
-        background: #e5e7eb;
-        border-radius: 10px;
-        margin: 10px 0;
+        height: 12px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 6px;
+        margin: 15px 0;
         overflow: hidden;
+        border: 1px solid rgba(212, 175, 55, 0.3);
     }
     
     .progress-bar-fill {
         height: 100%;
-        border-radius: 10px;
+        border-radius: 6px;
         transition: width 0.5s ease;
     }
     
-    .score-excellent { background: linear-gradient(90deg, #10b981, #34d399); }
-    .score-medium { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
-    .score-poor { background: linear-gradient(90deg, #ef4444, #f87171); }
+    /* Score circular */
+    .score-circle {
+        position: relative;
+        width: 180px;
+        height: 180px;
+        margin: 0 auto;
+    }
     
-    .title-with-outline {
-        color: white;
-        text-shadow: 
-            2px 2px 0 #000,
-            -2px -2px 0 #000,
-            2px -2px 0 #000,
-            -2px 2px 0 #000,
-            0px 2px 0 #000,
-            2px 0px 0 #000,
-            0px -2px 0 #000,
-            -2px 0px 0 #000,
-            2px 2px 5px rgba(0,0,0,0.3);
+    .score-fill {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: conic-gradient(#d4af37 0%, transparent 0%);
+        transition: all 1s ease;
+    }
+    
+    .score-inner {
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        background: #000000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        border: 2px solid #d4af37;
+    }
+    
+    /* Botões dourados */
+    .gold-button {
+        background: linear-gradient(135deg, #d4af37, #b8941f);
+        color: #000000 !important;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 25px;
+        font-weight: 700;
+        font-size: 1em;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .gold-button:hover {
+        background: linear-gradient(135deg, #e6c158, #d4af37);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(212, 175, 55, 0.4);
+    }
+    
+    /* Linhas divisorias douradas */
+    .gold-divider {
+        border: none;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, #d4af37, transparent);
+        margin: 40px 0;
+    }
+    
+    /* Tooltip legal */
+    .law-tooltip {
+        background: rgba(212, 175, 55, 0.1);
+        border-left: 3px solid #d4af37;
+        padding: 15px;
+        margin: 15px 0;
+        border-radius: 8px;
+        font-style: italic;
+    }
+    
+    /* Contexto destacado */
+    .context-box {
+        background: rgba(40, 40, 40, 0.9);
+        border: 1px solid rgba(212, 175, 55, 0.3);
+        border-radius: 10px;
+        padding: 15px;
+        margin: 15px 0;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9em;
+        line-height: 1.5;
+    }
+    
+    /* Status do sistema */
+    .system-status {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 12px;
+        font-size: 0.8em;
+        font-weight: 600;
+        background: rgba(0, 255, 0, 0.1);
+        color: #00ff00;
+        border: 1px solid rgba(0, 255, 0, 0.3);
+    }
+    
+    /* Responsividade */
+    @media (max-width: 768px) {
+        .metric-card {
+            margin-bottom: 20px;
+        }
+        .problem-card {
+            padding: 20px;
+        }
+    }
+    
+    /* Animação de entrada */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .fade-in {
+        animation: fadeIn 0.6s ease-out;
+    }
+    
+    /* Scrollbar customizada */
+    ::-webkit-scrollbar {
+        width: 10px;
+    }
+    
+    ::-webkit-scrollbar-track {
+        background: #1a1a1a;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: #d4af37;
+        border-radius: 5px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+        background: #e6c158;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -146,124 +324,81 @@ class SistemaAuditoriaAltaPrecisao:
         # Configurações de detecção por tipo de problema
         self.padroes_avancados = {
             'reajuste_ilegal': {
-                'nome': 'Reajuste Ilegal',
+                'nome': 'REAJUSTE ILEGAL DE ALUGUEL',
                 'gravidade': 'critical',
-                'descricao': 'O reajuste de aluguel deve ser ANUAL (12 meses). Períodos menores são ilegais.',
+                'descricao_curta': 'Reajuste mais rápido que 12 meses é ilegal',
+                'descricao_detalhada': 'A lei permite reajuste de aluguel apenas uma vez por ano (12 meses). Qualquer período menor como trimestral (3 meses) ou semestral (6 meses) é PROIBIDO.',
                 'lei': 'Lei 10.192/01',
                 'icone': '📅',
-                'padroes_exatos': [
-                    r'reajuste.*?(trimestral|mensal|semestral|bianual|bimestral)',
-                    r'reajuste.*?(a cada|cada).*?(3|4|6).*?(mes|mês)',
-                    r'reajuste.*?(periodicidade|periodo).*?(3|4|6).*?meses',
-                    r'(trimestral|mensal|semestral).*?reajuste',
-                    r'calculo.*?reajuste.*?(3|4|6).*?meses'
-                ],
-                'contexto_minimo': ['reajuste', 'aluguel', 'valor', 'atualização'],
-                'confianca_minima': 0.7
+                'explicacao_simples': 'Imagine que seu aluguel sobe a cada 3 meses. Isso é como tomar um choque de realidade todo trimestre! A lei protege você disso.',
+                'recomendacao': 'Exija que o reajuste seja ANUAL e baseado em índice oficial como IPCA ou IGP-M.',
+                'cor': '#ff4444'
             },
             'garantia_dupla': {
-                'nome': 'Garantia Dupla Ilegal',
+                'nome': 'GARANTIA DUPLA - FIADOR + CAUÇÃO',
                 'gravidade': 'critical',
-                'descricao': 'É proibido exigir mais de uma garantia no mesmo contrato (ex: fiador E caução).',
+                'descricao_curta': 'Exigir mais de uma garantia é ilegal',
+                'descricao_detalhada': 'O proprietário não pode exigir FIADOR e CAUÇÃO ao mesmo tempo. Você escolhe UMA forma de garantia.',
                 'lei': 'Art. 37, Lei 8.245/91',
                 'icone': '🔒',
-                'padroes_exatos': [
-                    r'(fiador|fiadores).*?(e|mais|alem|com|juntamente).*?(caucao|deposito|seguro|garantia)',
-                    r'(caucao|deposito|seguro|garantia).*?(e|mais|alem|com|juntamente).*?(fiador|fiadores)',
-                    r'(exige|requer|necessita).*?(fiador|fiadores).*?(caucao|deposito)',
-                    r'(exige|requer|necessita).*?(caucao|deposito).*?(fiador|fiadores)',
-                    r'dupla.*?garantia.*?(fiador|caucao)',
-                    r'(fiador|fiadores).*?e.*?(caucao|deposito).*?simultaneamente',
-                    r'(fiador|fiadores).*?acompanhado.*?(caucao|deposito)'
-                ],
-                'contexto_minimo': ['garantia', 'fiador', 'caução', 'depósito', 'seguro'],
-                'confianca_minima': 0.8
+                'explicacao_simples': 'É como pedir para você trazer dois guarda-chuvas em um dia de sol. Um já basta! A lei diz que o proprietário deve aceitar apenas UMA garantia.',
+                'recomendacao': 'Escolha entre fiador OU caução. Não aceite as duas coisas.',
+                'cor': '#ff4444'
             },
             'benfeitorias_ilegal': {
-                'nome': 'Renúncia Ilegal a Benfeitorias',
+                'nome': 'RENÚNCIA A BENFEITORIAS',
                 'gravidade': 'critical',
-                'descricao': 'O inquilino tem direito a indenização por benfeitorias necessárias.',
+                'descricao_curta': 'Não pode abrir mão de receber por melhorias',
+                'descricao_detalhada': 'Se você pagou um conserto necessário (ex: cano estourado, telhado vazando), tem direito a receber de volta ou descontar do aluguel.',
                 'lei': 'Art. 35, Lei 8.245/91',
                 'icone': '🏗️',
-                'padroes_exatos': [
-                    r'renuncia.*?(benfeitoria|reforma|obra|melhoria)',
-                    r'(nao|não).*?(indeniza|recebe|tem direito|ressarce).*?(benfeitoria|reforma|obra)',
-                    r'(sem|isento|isenção).*?(direito|indenização).*?(benfeitoria|reforma|obra)',
-                    r'abre.*?mao.*?(benfeitoria|reforma|obra)',
-                    r'renuncia.*?expressamente.*?(benfeitoria|reforma)',
-                    r'(nao|não).*?(haverá|existira).*?indenizacao.*?(benfeitoria|reforma)'
-                ],
-                'contexto_minimo': ['benfeitoria', 'reforma', 'obra', 'indenização', 'direito'],
-                'confianca_minima': 0.75
+                'explicacao_simples': 'Você conserta algo quebrado na casa e o dono diz "isso é seu dever". Não é! Gastos necessários devem ser ressarcidos.',
+                'recomendacao': 'Nunca assine cláusula que renuncie a este direito. Guarde todas as notas fiscais de consertos.',
+                'cor': '#ff4444'
             },
             'privacidade_violada': {
-                'nome': 'Violação de Privacidade',
+                'nome': 'VIOLAÇÃO DE PRIVACIDADE',
                 'gravidade': 'medium',
-                'descricao': 'O locador não pode entrar no imóvel sem aviso prévio e hora combinada.',
+                'descricao_curta': 'Proprietário não pode entrar sem avisar',
+                'descricao_detalhada': 'O dono do imóvel precisa combinar dia e hora para visitas. Não pode entrar "a qualquer momento" ou "sem aviso prévio".',
                 'lei': 'Art. 23, IX, Lei 8.245/91',
                 'icone': '👁️',
-                'padroes_exatos': [
-                    r'(qualquer|a qualquer|livre).*?(visita|vistoria|ingresso|acesso)',
-                    r'(sem|dispensa|dispensado).*?(aviso|notificação|comunicação).*?(visita|vistoria|entrar)',
-                    r'visita.*?(sem|dispensa).*?aviso',
-                    r'vistoria.*?(sem|dispensa).*?aviso',
-                    r'(qualquer|a qualquer).*?momento.*?(visita|vistoria)',
-                    r'(livre|irrestrito).*?acesso.*?(visita|vistoria)'
-                ],
-                'contexto_minimo': ['visita', 'vistoria', 'aviso', 'locador', 'entrar'],
-                'confianca_minima': 0.6
+                'explicacao_simples': 'Sua casa é seu castelo! O proprietário não pode aparecer de surpresa como se fosse dono da sua privacidade.',
+                'recomendacao': 'Exija que todas as visitas sejam agendadas com pelo menos 24h de antecedência.',
+                'cor': '#ffaa44'
             },
             'multa_abusiva': {
-                'nome': 'Multa Abusiva',
+                'nome': 'MULTA ABUSIVA DE RESCISÃO',
                 'gravidade': 'critical',
-                'descricao': 'A multa deve ser proporcional ao tempo restante. Multa integral de 12 meses é abusiva.',
+                'descricao_curta': 'Multa de 12 meses inteiros é abusiva',
+                'descricao_detalhada': 'A multa por quebra de contrato deve ser proporcional ao tempo que falta. Multa integral de 12 meses é considerada ABUSIVA.',
                 'lei': 'Art. 4º, Lei 8.245/91 e CDC',
                 'icone': '💰',
-                'padroes_exatos': [
-                    r'multa.*?(12|doze).*?meses',
-                    r'(12|doze).*?meses.*?multa',
-                    r'multa.*?integral.*?(aluguel|valor)',
-                    r'multa.*?total.*?(aluguel|valor)',
-                    r'multa.*?correspondente.*?(12|doze|integral|total)',
-                    r'pagar.*?(12|doze).*?meses.*?multa',
-                    r'multa.*?equivalente.*?(12|doze).*?meses',
-                    r'(indenizar|compensar).*?(12|doze).*?meses.*?aluguel'
-                ],
-                'contexto_minimo': ['multa', 'rescisão', 'aluguel', 'meses', 'valor'],
-                'confianca_minima': 0.85
+                'explicacao_simples': 'Pagar 12 meses de aluguel por sair antes é como comprar um carro e ter que pagar por todos os carros da loja! A multa deve ser justa.',
+                'recomendacao': 'Negocie multa proporcional: 3 meses se faltar muito tempo, menos se faltar pouco.',
+                'cor': '#ff4444'
             },
             'venda_despeja': {
-                'nome': 'Venda Despeja Inquilino',
+                'nome': 'VENDA NÃO DESPEJA INQUILINO',
                 'gravidade': 'medium',
-                'descricao': 'A venda do imóvel não rescinde automaticamente o contrato. Inquilino tem preferência.',
+                'descricao_curta': 'Venda do imóvel não termina contrato',
+                'descricao_detalhada': 'Se o proprietário vender a casa, você NÃO precisa sair imediatamente. Tem direito a 90 dias para se organizar e preferência na compra.',
                 'lei': 'Art. 27, Lei 8.245/91',
                 'icone': '🏠',
-                'padroes_exatos': [
-                    r'venda.*?(rescindido|rescisão|terminado|extinto).*?automaticamente',
-                    r'alienação.*?rescindir.*?contrato',
-                    r'venda.*?imovel.*?(rescisão|rescindido).*?automatica',
-                    r'(alienação|transferência).*?determina.*?rescisão',
-                    r'venda.*?acarreta.*?rescisão.*?automatica'
-                ],
-                'contexto_minimo': ['venda', 'alienação', 'rescisão', 'contrato', 'automático'],
-                'confianca_minima': 0.65
+                'explicacao_simples': 'O dono vendeu? Você não vira sem-teto! O contrato continua válido com o novo dono e você tem tempo para se preparar.',
+                'recomendacao': 'Não aceite cláusula que diga que venda automaticamente cancela o contrato.',
+                'cor': '#ffaa44'
             },
             'proibicao_animais': {
-                'nome': 'Proibição Total de Animais',
+                'nome': 'PROIBIÇÃO TOTAL DE ANIMAIS',
                 'gravidade': 'low',
-                'descricao': 'A proibição total de animais pode ser abusiva. Apenas por justa causa.',
+                'descricao_curta': 'Proibir animais pode ser abusivo',
+                'descricao_detalhada': 'Proibição total de animais domésticos pode ser considerada abusiva. Apenas pode proibir se houver justa causa (ex: animal perigoso).',
                 'lei': 'Art. 51, CDC e Súmula 482 STJ',
                 'icone': '🐕',
-                'padroes_exatos': [
-                    r'proibido.*?animais',
-                    r'vedado.*?animais',
-                    r'(nao|não).*?permitido.*?animais',
-                    r'proibição.*?total.*?animais',
-                    r'(nao|não).*?animais.*?estimação',
-                    r'interdita.*?presença.*?animais'
-                ],
-                'contexto_minimo': ['animais', 'proibido', 'vedado', 'permitido', 'pet'],
-                'confianca_minima': 0.5
+                'explicacao_simples': 'Seu pet é da família! Proibir totalmente é como dizer que você não pode ter uma foto da sua mãe na parede.',
+                'recomendacao': 'Se tiver animal, negocie essa cláusula. Ofereça garantias de bom comportamento.',
+                'cor': '#44aaff'
             }
         }
         
@@ -342,11 +477,11 @@ class SistemaAuditoriaAltaPrecisao:
     def obter_nivel_confianca(self, valor):
         """Converte valor numérico em nível de confiança"""
         if valor >= 0.8:
-            return "alta", "confidence-high"
+            return "ALTA", "#00ff00"
         elif valor >= 0.6:
-            return "média", "confidence-medium"
+            return "MÉDIA", "#ffff00"
         else:
-            return "baixa", "confidence-low"
+            return "BAIXA", "#ff4444"
     
     def analisar_documento_avancado(self, texto):
         """Análise avançada com múltiplas camadas de verificação"""
@@ -367,7 +502,45 @@ class SistemaAuditoriaAltaPrecisao:
             melhor_confianca = 0
             melhor_contexto = ""
             
-            for padrao in config['padroes_exatos']:
+            # Padrões específicos para cada tipo
+            padroes = []
+            if chave == 'reajuste_ilegal':
+                padroes = [
+                    r'reajuste.*?(trimestral|mensal|semestral|bianual|bimestral)',
+                    r'reajuste.*?(a cada|cada).*?(3|4|6).*?(mes|mês)'
+                ]
+            elif chave == 'garantia_dupla':
+                padroes = [
+                    r'(fiador|fiadores).*?(e|mais|alem|com|juntamente).*?(caucao|deposito|seguro|garantia)',
+                    r'(caucao|deposito|seguro|garantia).*?(e|mais|alem|com|juntamente).*?(fiador|fiadores)'
+                ]
+            elif chave == 'benfeitorias_ilegal':
+                padroes = [
+                    r'renuncia.*?(benfeitoria|reforma|obra|melhoria)',
+                    r'(nao|não).*?(indeniza|recebe|tem direito|ressarce).*?(benfeitoria|reforma|obra)'
+                ]
+            elif chave == 'privacidade_violada':
+                padroes = [
+                    r'(qualquer|a qualquer|livre).*?(visita|vistoria|ingresso|acesso)',
+                    r'(sem|dispensa|dispensado).*?(aviso|notificação|comunicação).*?(visita|vistoria|entrar)'
+                ]
+            elif chave == 'multa_abusiva':
+                padroes = [
+                    r'multa.*?(12|doze).*?meses',
+                    r'(12|doze).*?meses.*?multa'
+                ]
+            elif chave == 'venda_despeja':
+                padroes = [
+                    r'venda.*?(rescindido|rescisão|terminado|extinto).*?automaticamente',
+                    r'alienação.*?rescindir.*?contrato'
+                ]
+            elif chave == 'proibicao_animais':
+                padroes = [
+                    r'proibido.*?animais',
+                    r'vedado.*?animais'
+                ]
+            
+            for padrao in padroes:
                 try:
                     matches = list(re.finditer(padrao, texto_preparado, re.IGNORECASE))
                     
@@ -375,7 +548,7 @@ class SistemaAuditoriaAltaPrecisao:
                         # Verificar contexto
                         contexto_relevante = self.verificar_contexto(
                             texto_preparado, 
-                            config['contexto_minimo'], 
+                            ['contrato', 'aluguel', 'locação'], 
                             match.start()
                         )
                         
@@ -387,32 +560,36 @@ class SistemaAuditoriaAltaPrecisao:
                         )
                         
                         # Manter apenas o match com maior confiança
-                        if confianca > melhor_confianca and confianca >= config['confianca_minima']:
+                        if confianca > melhor_confianca and confianca >= 0.5:
                             melhor_match = match
                             melhor_confianca = confianca
                             
                             # Extrair contexto
-                            inicio = max(0, match.start() - 100)
-                            fim = min(len(texto_preparado), match.end() + 100)
+                            inicio = max(0, match.start() - 150)
+                            fim = min(len(texto_preparado), match.end() + 150)
                             melhor_contexto = texto_preparado[inicio:fim]
                 
                 except Exception as e:
                     continue
             
-            if melhor_match and melhor_confianca >= config['confianca_minima']:
-                nivel_confianca, classe_confianca = self.obter_nivel_confianca(melhor_confianca)
+            if melhor_match and melhor_confianca >= 0.5:
+                nivel_confianca, cor_confianca = self.obter_nivel_confianca(melhor_confianca)
                 
                 problemas_detectados.append({
                     'id': chave,
                     'nome': config['nome'],
                     'gravidade': config['gravidade'],
-                    'descricao': config['descricao'],
+                    'descricao_curta': config['descricao_curta'],
+                    'descricao_detalhada': config['descricao_detalhada'],
                     'lei': config['lei'],
                     'icone': config['icone'],
+                    'explicacao_simples': config['explicacao_simples'],
+                    'recomendacao': config['recomendacao'],
                     'contexto': f"...{melhor_contexto}..." if melhor_contexto else "",
                     'confianca': melhor_confianca,
                     'nivel_confianca': nivel_confianca,
-                    'classe_confianca': classe_confianca,
+                    'cor_confianca': cor_confianca,
+                    'cor_gravidade': config['cor'],
                     'posicao': melhor_match.start()
                 })
         
@@ -437,20 +614,15 @@ class SistemaAuditoriaAltaPrecisao:
         # Média de confiança
         media_confianca = sum(p['confianca'] for p in problemas) / total_problemas if total_problemas > 0 else 0
         
-        # Distribuição por confiança
-        alta_confianca = sum(1 for p in problemas if p['confianca'] >= 0.8)
-        media_confianca_count = sum(1 for p in problemas if 0.6 <= p['confianca'] < 0.8)
-        baixa_confianca = sum(1 for p in problemas if p['confianca'] < 0.6)
-        
         # Score de conformidade ponderado por confiança
         penalidade = 0
         for problema in problemas:
             peso = problema['confianca']  # Ponderar pela confiança
             
             if problema['gravidade'] == 'critical':
-                penalidade += 20 * peso
+                penalidade += 25 * peso
             elif problema['gravidade'] == 'medium':
-                penalidade += 10 * peso
+                penalidade += 15 * peso
             else:
                 penalidade += 5 * peso
         
@@ -458,14 +630,11 @@ class SistemaAuditoriaAltaPrecisao:
         
         # Nível de risco ajustado
         if criticos > 0:
-            if media_confianca > 0.7:
-                nivel_risco = 'ALTO'
-            else:
-                nivel_risco = 'ALTO (confiança moderada)'
+            nivel_risco = 'ALTO RISCO'
         elif medios > 0:
-            nivel_risco = 'MÉDIO'
+            nivel_risco = 'ATENÇÃO'
         else:
-            nivel_risco = 'BAIXO'
+            nivel_risco = 'BAIXO RISCO'
         
         return {
             'total_problemas': total_problemas,
@@ -474,9 +643,6 @@ class SistemaAuditoriaAltaPrecisao:
             'leves': leves,
             'score_conformidade': score,
             'media_confianca': media_confianca,
-            'alta_confianca': alta_confianca,
-            'media_confianca_count': media_confianca_count,
-            'baixa_confianca': baixa_confianca,
             'nivel_risco': nivel_risco
         }
 
@@ -509,119 +675,19 @@ def extrair_texto_pdf_completo(arquivo):
         st.error(f"❌ Erro ao processar PDF: {str(e)}")
         return None
 
-def criar_grafico_distribuicao_html(metricas):
-    """Cria gráfico de distribuição usando HTML/CSS"""
-    if metricas['total_problemas'] == 0:
-        return None
-    
-    total = metricas['total_problemas']
-    crit_percent = (metricas['criticos'] / total) * 100 if total > 0 else 0
-    med_percent = (metricas['medios'] / total) * 100 if total > 0 else 0
-    lev_percent = (metricas['leves'] / total) * 100 if total > 0 else 0
-    
-    html = f"""
-    <div style="margin: 20px 0;">
-        <h4 style="margin-bottom: 15px; color: #1e3a8a;">📊 Distribuição por Gravidade</h4>
-        <div style="display: flex; height: 40px; border-radius: 8px; overflow: hidden; margin-bottom: 10px;">
-            <div style="flex: {metricas['criticos']}; background: #ef4444; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
-                {metricas['criticos']}
-            </div>
-            <div style="flex: {metricas['medios']}; background: #f59e0b; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
-                {metricas['medios']}
-            </div>
-            <div style="flex: {metricas['leves']}; background: #10b981; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
-                {metricas['leves']}
-            </div>
-        </div>
-        <div style="display: flex; justify-content: space-between; font-size: 0.9em; color: #6b7280;">
-            <div>🚨 Críticos: {crit_percent:.1f}%</div>
-            <div>⚠️ Médios: {med_percent:.1f}%</div>
-            <div>ℹ️ Leves: {lev_percent:.1f}%</div>
-        </div>
-    </div>
-    """
-    return html
-
-def criar_grafico_score_html(score):
-    """Cria gráfico de score usando HTML/CSS"""
-    if score >= 80:
-        score_class = "score-excellent"
-        status = "EXCELENTE"
-        color = "#10b981"
-    elif score >= 60:
-        score_class = "score-medium"
-        status = "ATENÇÃO"
-        color = "#f59e0b"
-    else:
-        score_class = "score-poor"
-        status = "CRÍTICO"
-        color = "#ef4444"
-    
-    html = f"""
-    <div style="text-align: center; margin: 20px 0;">
-        <h4 style="margin-bottom: 15px; color: #1e3a8a;">🎯 Índice de Conformidade</h4>
-        <div style="position: relative; margin: 0 auto; width: 200px; height: 200px;">
-            <div style="position: absolute; top: 0; left: 0; width: 200px; height: 200px; border-radius: 50%; background: conic-gradient(
-                {color} 0% {score}%,
-                #e5e7eb {score}% 100%
-            );"></div>
-            <div style="position: absolute; top: 20px; left: 20px; width: 160px; height: 160px; border-radius: 50%; background: white; display: flex; align-items: center; justify-content: center; flex-direction: column;">
-                <div style="font-size: 2.5em; font-weight: bold; color: {color};">{int(score)}</div>
-                <div style="font-size: 1.1em; color: {color}; font-weight: bold;">{status}</div>
-                <div style="font-size: 0.9em; color: #6b7280;">de 100</div>
-            </div>
-        </div>
-    </div>
-    """
-    return html
-
-def criar_grafico_confianca_html(metricas):
-    """Cria gráfico de distribuição de confiança"""
-    if metricas['total_problemas'] == 0:
-        return None
-    
-    total = metricas['total_problemas']
-    alta_percent = (metricas['alta_confianca'] / total) * 100 if total > 0 else 0
-    media_percent = (metricas['media_confianca_count'] / total) * 100 if total > 0 else 0
-    baixa_percent = (metricas['baixa_confianca'] / total) * 100 if total > 0 else 0
-    
-    html = f"""
-    <div style="margin: 20px 0;">
-        <h4 style="margin-bottom: 15px; color: #1e3a8a;">📈 Qualidade das Detecções</h4>
-        <div style="display: flex; height: 30px; border-radius: 8px; overflow: hidden; margin-bottom: 10px;">
-            <div style="flex: {metricas['alta_confianca']}; background: #10b981; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 0.9em;">
-                {metricas['alta_confianca']}
-            </div>
-            <div style="flex: {metricas['media_confianca_count']}; background: #f59e0b; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 0.9em;">
-                {metricas['media_confianca_count']}
-            </div>
-            <div style="flex: {metricas['baixa_confianca']}; background: #ef4444; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 0.9em;">
-                {metricas['baixa_confianca']}
-            </div>
-        </div>
-        <div style="display: flex; justify-content: space-between; font-size: 0.9em; color: #6b7280;">
-            <div>✅ Alta: {alta_percent:.1f}%</div>
-            <div>⚠️ Média: {media_percent:.1f}%</div>
-            <div>❌ Baixa: {baixa_percent:.1f}%</div>
-        </div>
-        <div style="margin-top: 10px; font-size: 0.85em; color: #6b7280; text-align: center;">
-            Confiança média: <strong>{metricas['media_confianca']:.1%}</strong>
-        </div>
-    </div>
-    """
-    return html
-
 # --------------------------------------------------
 # INTERFACE PRINCIPAL
 # --------------------------------------------------
 
 def main():
-    # Cabeçalho profissional com contorno branco
+    # Cabeçalho profissional com tema escuro e dourado
     st.markdown("""
-    <div class="main-header">
-        <h1 class="title-with-outline" style="margin: 0; font-size: 2.5em;">⚖️ BUROCRATA DE BOLSO</h1>
-        <p style="margin: 10px 0 0 0; font-size: 1.2em; opacity: 0.9; color: white;">Sistema Inteligente de Auditoria Jurídica</p>
-        <p style="margin: 5px 0 0 0; font-size: 0.9em; opacity: 0.7; color: white;">Versão 9.0 - Detecção de Alta Precisão</p>
+    <div class="main-header fade-in">
+        <h1 style="margin: 0; font-size: 3em; color: #d4af37; text-shadow: 0 0 20px rgba(212, 175, 55, 0.5);">⚖️ BUROCRATA DE BOLSO</h1>
+        <p style="margin: 10px 0 0 0; font-size: 1.3em; color: #ffffff; opacity: 0.9;">Auditoria Jurídica Inteligente para Contratos</p>
+        <p style="margin: 5px 0 0 0; font-size: 0.9em; color: #d4af37; opacity: 0.7;">
+            <span class="system-status">SISTEMA ATIVO</span> • Versão 10.0 • Detecção de Alta Precisão
+        </p>
     </div>
     """, unsafe_allow_html=True)
     
@@ -631,8 +697,10 @@ def main():
     # Área de upload centralizada
     st.markdown("""
     <div style="text-align: center; margin: 40px 0;">
-        <h2 style="color: #1e3a8a;">📤 UPLOAD DO DOCUMENTO</h2>
-        <p style="color: #6b7280; margin-bottom: 20px;">Carregue seu contrato em PDF para análise avançada</p>
+        <h2 style="color: #d4af37; font-size: 2em;">📤 ENVIE SEU CONTRATO</h2>
+        <p style="color: #cccccc; margin-bottom: 20px; font-size: 1.1em;">
+            Analise grátis seu contrato de aluguel em menos de 1 minuto
+        </p>
     </div>
     """, unsafe_allow_html=True)
     
@@ -648,7 +716,7 @@ def main():
     
     # Processar se arquivo carregado
     if arquivo:
-        with st.spinner("🔍 Analisando documento com sistema de alta precisão..."):
+        with st.spinner("🔍 Analisando seu contrato com inteligência artificial..."):
             # Extrair texto
             texto = extrair_texto_pdf_completo(arquivo)
             
@@ -657,14 +725,17 @@ def main():
                 problemas = auditoria.analisar_documento_avancado(texto)
                 metricas = auditoria.gerar_metricas_detalhadas(problemas)
                 
-                # Área de resultados
-                st.markdown("---")
+                # Divisor dourado
+                st.markdown('<hr class="gold-divider">', unsafe_allow_html=True)
                 
                 # Título dos resultados
                 st.markdown(f"""
-                <div style="text-align: center; margin: 30px 0;">
-                    <h2 style="color: #1e3a8a;">📊 RESULTADOS DA ANÁLISE AVANÇADA</h2>
-                    <p style="color: #6b7280;">Documento: <strong>{arquivo.name}</strong> | {len(texto):,} caracteres analisados</p>
+                <div style="text-align: center; margin: 40px 0;">
+                    <h2 style="color: #d4af37; font-size: 2.2em;">📊 RESULTADO DA ANÁLISE</h2>
+                    <p style="color: #cccccc; font-size: 1.1em;">
+                        Documento: <span style="color: #d4af37; font-weight: bold;">{arquivo.name}</span> 
+                        • {len(texto):,} caracteres analisados
+                    </p>
                 </div>
                 """, unsafe_allow_html=True)
                 
@@ -673,63 +744,52 @@ def main():
                 
                 with col1:
                     st.markdown(f"""
-                    <div class="metric-card" style="border-top-color: #3b82f6;">
-                        <h3 style="margin: 0; color: #1e3a8a;">{metricas['total_problemas']}</h3>
-                        <p style="margin: 5px 0 0 0; font-weight: 600;">Total de Problemas</p>
+                    <div class="metric-card" style="border-top-color: #d4af37;">
+                        <h3 style="margin: 0; font-size: 2.5em; color: #d4af37;">{metricas['total_problemas']}</h3>
+                        <p style="margin: 10px 0 0 0; font-weight: 600; font-size: 1.1em;">PROBLEMAS ENCONTRADOS</p>
+                        <p style="margin: 5px 0 0 0; color: #cccccc; font-size: 0.9em;">Análise completa do documento</p>
                     </div>
                     """, unsafe_allow_html=True)
                 
                 with col2:
+                    cor_critico = "#ff4444" if metricas['criticos'] > 0 else "#cccccc"
                     st.markdown(f"""
-                    <div class="metric-card" style="border-top-color: #ef4444;">
-                        <h3 style="margin: 0; color: #1e3a8a;">{metricas['criticos']}</h3>
-                        <p style="margin: 5px 0 0 0; font-weight: 600;">Problemas Críticos</p>
+                    <div class="metric-card" style="border-top-color: {cor_critico};">
+                        <h3 style="margin: 0; font-size: 2.5em; color: {cor_critico};">{metricas['criticos']}</h3>
+                        <p style="margin: 10px 0 0 0; font-weight: 600; font-size: 1.1em;">🚨 CRÍTICOS</p>
+                        <p style="margin: 5px 0 0 0; color: #cccccc; font-size: 0.9em;">Exigem atenção imediata</p>
                     </div>
                     """, unsafe_allow_html=True)
                 
                 with col3:
+                    cor_score = "#00ff00" if metricas['score_conformidade'] >= 80 else "#ffaa44" if metricas['score_conformidade'] >= 60 else "#ff4444"
                     st.markdown(f"""
-                    <div class="metric-card" style="border-top-color: #f59e0b;">
-                        <h3 style="margin: 0; color: #1e3a8a;">{metricas['score_conformidade']:.0f}</h3>
-                        <p style="margin: 5px 0 0 0; font-weight: 600;">Score de Conformidade</p>
+                    <div class="metric-card" style="border-top-color: {cor_score};">
+                        <h3 style="margin: 0; font-size: 2.5em; color: {cor_score};">{metricas['score_conformidade']:.0f}</h3>
+                        <p style="margin: 10px 0 0 0; font-weight: 600; font-size: 1.1em;">SCORE FINAL</p>
+                        <p style="margin: 5px 0 0 0; color: #cccccc; font-size: 0.9em;">de 100 pontos</p>
                     </div>
                     """, unsafe_allow_html=True)
                 
                 with col4:
+                    cor_risco = "#ff4444" if metricas['nivel_risco'] == 'ALTO RISCO' else "#ffaa44" if metricas['nivel_risco'] == 'ATENÇÃO' else "#00ff00"
                     st.markdown(f"""
-                    <div class="metric-card" style="border-top-color: #10b981;">
-                        <h3 style="margin: 0; color: #1e3a8a;">{metricas['nivel_risco']}</h3>
-                        <p style="margin: 5px 0 0 0; font-weight: 600;">Nível de Risco</p>
+                    <div class="metric-card" style="border-top-color: {cor_risco};">
+                        <h3 style="margin: 0; font-size: 2em; color: {cor_risco};">{metricas['nivel_risco']}</h3>
+                        <p style="margin: 10px 0 0 0; font-weight: 600; font-size: 1.1em;">NÍVEL DE RISCO</p>
+                        <p style="margin: 5px 0 0 0; color: #cccccc; font-size: 0.9em;">Classificação do contrato</p>
                     </div>
                     """, unsafe_allow_html=True)
                 
-                # Gráficos e visualizações
-                col_left, col_right = st.columns([1, 1])
+                # Divisor
+                st.markdown('<hr class="gold-divider">', unsafe_allow_html=True)
                 
-                with col_left:
-                    # Gráfico de distribuição
-                    html_dist = criar_grafico_distribuicao_html(metricas)
-                    if html_dist:
-                        st.markdown(html_dist, unsafe_allow_html=True)
-                    
-                    # Gráfico de confiança
-                    html_conf = criar_grafico_confianca_html(metricas)
-                    if html_conf:
-                        st.markdown(html_conf, unsafe_allow_html=True)
-                
-                with col_right:
-                    # Gráfico de score
-                    html_score = criar_grafico_score_html(metricas['score_conformidade'])
-                    if html_score:
-                        st.markdown(html_score, unsafe_allow_html=True)
-                
-                # Lista de problemas detectados
-                st.markdown("---")
+                # Lista de problemas detectados - DESIGN SIMPLIFICADO
                 st.markdown(f"""
-                <div style="margin: 30px 0;">
-                    <h2 style="color: #1e3a8a;">🔍 PROBLEMAS DETECTADOS</h2>
-                    <p style="color: #6b7280;">
-                        {len(problemas)} problema(s) encontrado(s) com sistema de detecção avançado
+                <div style="text-align: center; margin: 40px 0;">
+                    <h2 style="color: #d4af37; font-size: 2.2em;">🔍 PROBLEMAS IDENTIFICADOS</h2>
+                    <p style="color: #cccccc; font-size: 1.1em;">
+                        {len(problemas)} problema(s) encontrado(s) no seu contrato
                     </p>
                 </div>
                 """, unsafe_allow_html=True)
@@ -737,174 +797,225 @@ def main():
                 if problemas:
                     for i, problema in enumerate(problemas, 1):
                         # Determinar classe CSS baseado na gravidade
-                        classe_gravidade = {
-                            'critical': 'critical-card',
-                            'medium': 'medium-card',
-                            'low': 'low-card'
-                        }.get(problema['gravidade'], 'low-card')
+                        classe_css = {
+                            'critical': 'critical-problem',
+                            'medium': 'medium-problem',
+                            'low': 'low-problem'
+                        }.get(problema['gravidade'], 'low-problem')
                         
-                        # Determinar cor do ícone
-                        cor_icone = {
-                            'critical': '#ef4444',
-                            'medium': '#f59e0b',
-                            'low': '#10b981'
-                        }.get(problema['gravidade'], '#10b981')
+                        # Determinar badge de gravidade
+                        badge_gravidade = {
+                            'critical': 'critical-badge',
+                            'medium': 'medium-badge',
+                            'low': 'low-badge'
+                        }.get(problema['gravidade'], 'low-badge')
                         
-                        # Determinar cor da gravidade
-                        cor_gravidade = {
-                            'critical': 'Crítico',
-                            'medium': 'Médio',
-                            'low': 'Leve'
-                        }.get(problema['gravidade'], 'Leve')
+                        texto_gravidade = {
+                            'critical': '🚨 CRÍTICO',
+                            'medium': '⚠️ ATENÇÃO',
+                            'low': 'ℹ️ INFORMATIVO'
+                        }.get(problema['gravidade'], 'ℹ️ INFORMATIVO')
                         
-                        cor_texto_gravidade = {
-                            'critical': '#dc2626',
-                            'medium': '#d97706',
-                            'low': '#059669'
-                        }.get(problema['gravidade'], '#059669')
-                        
+                        # Exibir problema de forma SIMPLES e DIRETA
                         st.markdown(f"""
-                        <div class="issue-card {classe_gravidade}">
-                            <div style="display: flex; align-items: center; justify-content: space-between;">
-                                <div style="display: flex; align-items: center; gap: 10px;">
-                                    <div style="font-size: 1.5em;">{problema['icone']}</div>
-                                    <div>
-                                        <h4 style="margin: 0; color: #1e3a8a;">#{i}: {problema['nome']}</h4>
-                                        <div style="display: flex; gap: 15px; margin-top: 5px;">
-                                            <span style="color: {cor_texto_gravidade}; font-weight: 600;">
-                                                🔴 Gravidade: {cor_gravidade}
-                                            </span>
-                                            <span style="color: #6b7280;">
-                                                📚 Base Legal: {problema['lei']}
-                                            </span>
-                                            <span class="confidence-badge {problema['classe_confianca']}">
-                                                Confiança: {problema['nivel_confianca']} ({problema['confianca']:.0%})
+                        <div class="problem-card {classe_css} fade-in">
+                            <div style="display: flex; align-items: flex-start; margin-bottom: 20px;">
+                                <div class="gold-icon">{problema['icone']}</div>
+                                <div style="flex: 1;">
+                                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                                        <h3 style="margin: 0; color: #ffffff; font-size: 1.4em;">{problema['nome']}</h3>
+                                        <span class="severity-badge {badge_gravidade}">{texto_gravidade}</span>
+                                    </div>
+                                    
+                                    <div style="background: rgba(40, 40, 40, 0.7); padding: 15px; border-radius: 10px; margin: 15px 0;">
+                                        <h4 style="margin: 0 0 10px 0; color: #d4af37; font-size: 1.1em;">❌ O QUE ESTÁ ERRADO:</h4>
+                                        <p style="margin: 0; color: #ffffff; line-height: 1.6;">
+                                            {problema['descricao_detalhada']}
+                                        </p>
+                                    </div>
+                                    
+                                    <div style="background: rgba(212, 175, 55, 0.1); padding: 15px; border-radius: 10px; margin: 15px 0; border-left: 3px solid #d4af37;">
+                                        <h4 style="margin: 0 0 10px 0; color: #d4af37; font-size: 1.1em;">💡 EM LINGUAGEM SIMPLES:</h4>
+                                        <p style="margin: 0; color: #ffffff; line-height: 1.6; font-style: italic;">
+                                            "{problema['explicacao_simples']}"
+                                        </p>
+                                    </div>
+                                    
+                                    <div style="display: flex; justify-content: space-between; margin-top: 20px;">
+                                        <div>
+                                            <span style="color: #d4af37; font-weight: bold;">📚 Base Legal:</span>
+                                            <span style="color: #ffffff; margin-left: 10px;">{problema['lei']}</span>
+                                        </div>
+                                        <div>
+                                            <span style="color: #d4af37; font-weight: bold;">🎯 Confiança:</span>
+                                            <span style="color: {problema['cor_confianca']}; margin-left: 10px; font-weight: bold;">
+                                                {problema['nivel_confianca']} ({problema['confianca']:.0%})
                                             </span>
                                         </div>
                                     </div>
-                                </div>
-                            </div>
-                            <div style="margin-top: 15px;">
-                                <p style="margin: 0 0 10px 0; color: #374151;">
-                                    {problema['descricao']}
-                                </p>
-                                <div style="background: #f9fafb; padding: 12px; border-radius: 6px; margin-top: 10px;">
-                                    <p style="margin: 0; font-size: 0.9em; color: #6b7280; font-style: italic;">
-                                        <strong>Contexto encontrado:</strong> {problema['contexto']}
-                                    </p>
+                                    
+                                    <div style="background: rgba(0, 100, 0, 0.2); padding: 15px; border-radius: 10px; margin-top: 20px; border: 1px solid #00aa00;">
+                                        <h4 style="margin: 0 0 10px 0; color: #00ff00; font-size: 1.1em;">✅ O QUE FAZER AGORA:</h4>
+                                        <p style="margin: 0; color: #ffffff; line-height: 1.6; font-weight: bold;">
+                                            {problema['recomendacao']}
+                                        </p>
+                                    </div>
+                                    
+                                    <div style="margin-top: 20px; padding-top: 15px; border-top: 1px dashed rgba(212, 175, 55, 0.3);">
+                                        <p style="margin: 0; color: #999999; font-size: 0.9em;">
+                                            <strong>Trecho encontrado no contrato:</strong><br>
+                                            <span style="color: #cccccc; font-family: monospace; font-size: 0.9em;">
+                                                {problema['contexto'][:300]}...
+                                            </span>
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                         """, unsafe_allow_html=True)
                 else:
+                    # Mensagem quando nenhum problema é encontrado
                     st.markdown("""
-                    <div style="text-align: center; padding: 50px; background: #f0fdf4; border-radius: 10px; margin: 20px 0;">
-                        <div style="font-size: 4em; color: #10b981;">✅</div>
-                        <h3 style="color: #065f46; margin: 10px 0;">Nenhum problema detectado!</h3>
-                        <p style="color: #059669;">Este contrato parece estar em conformidade com a legislação brasileira.</p>
+                    <div style="text-align: center; padding: 60px; background: rgba(0, 100, 0, 0.2); border-radius: 20px; margin: 40px 0; border: 2px solid #00ff00;">
+                        <div style="font-size: 5em; color: #00ff00;">✅</div>
+                        <h3 style="color: #00ff00; margin: 20px 0; font-size: 2em;">CONTRATO REGULAR!</h3>
+                        <p style="color: #cccccc; font-size: 1.2em; max-width: 600px; margin: 0 auto;">
+                            Parabéns! Seu contrato está em conformidade com a legislação brasileira.
+                        </p>
+                        <p style="color: #999999; margin-top: 20px;">
+                            Se ainda tiver dúvidas, consulte um advogado especializado.
+                        </p>
                     </div>
                     """, unsafe_allow_html=True)
                 
                 # Botão para exportar relatório
-                st.markdown("---")
-                st.markdown("""
-                <div style="text-align: center; margin: 30px 0;">
-                    <h3 style="color: #1e3a8a;">📥 EXPORTAR RELATÓRIO</h3>
-                </div>
-                """, unsafe_allow_html=True)
-                
-                # Criar DataFrame para exportação
                 if problemas:
+                    st.markdown('<hr class="gold-divider">', unsafe_allow_html=True)
+                    
+                    st.markdown("""
+                    <div style="text-align: center; margin: 40px 0;">
+                        <h3 style="color: #d4af37; font-size: 1.8em;">📥 RELATÓRIO COMPLETO</h3>
+                        <p style="color: #cccccc; margin-bottom: 30px;">
+                            Baixe o relatório detalhado para discutir com seu advogado
+                        </p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    # Criar DataFrame para exportação
                     dados_exportar = []
                     for p in problemas:
                         dados_exportar.append({
                             'Problema': p['nome'],
-                            'Gravidade': p['gravidade'].capitalize(),
-                            'Descrição': p['descricao'],
+                            'Gravidade': p['gravidade'].upper(),
+                            'Descrição': p['descricao_detalhada'],
+                            'Recomendação': p['recomendacao'],
                             'Base Legal': p['lei'],
-                            'Confiança (%)': f"{p['confianca']:.1%}",
-                            'Contexto': p['contexto'][:200] + "..." if len(p['contexto']) > 200 else p['contexto']
+                            'Confiança': f"{p['confianca']:.1%}"
                         })
                     
                     df_relatorio = pd.DataFrame(dados_exportar)
                     
                     # Converter para CSV
                     csv_buffer = io.StringIO()
-                    df_relatorio.to_csv(csv_buffer, index=False)
+                    df_relatorio.to_csv(csv_buffer, index=False, encoding='utf-8-sig')
                     csv_str = csv_buffer.getvalue()
                     
                     col1, col2, col3 = st.columns([1, 2, 1])
                     with col2:
                         st.download_button(
-                            label="📊 Baixar Relatório em CSV",
+                            label="⬇️ BAIXAR RELATÓRIO EM CSV",
                             data=csv_str,
-                            file_name=f"relatorio_auditoria_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                            file_name=f"relatorio_contrato_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
                             mime="text/csv",
-                            use_container_width=True
+                            use_container_width=True,
+                            type="primary"
                         )
     else:
         # Mensagem inicial quando nenhum arquivo foi carregado
         st.markdown("""
-        <div class="upload-container">
-            <div style="font-size: 4em; color: #9ca3af;">📄</div>
-            <h3 style="color: #4b5563; margin: 20px 0;">Arraste seu contrato em PDF aqui</h3>
-            <p style="color: #6b7280;">Ou clique para selecionar um arquivo</p>
-            <p style="color: #9ca3af; font-size: 0.9em; margin-top: 30px;">
-                🔒 Seus dados são processados localmente e não são armazenados
+        <div class="upload-container fade-in">
+            <div style="font-size: 5em; color: #d4af37; margin-bottom: 20px;">📄</div>
+            <h3 style="color: #ffffff; margin: 20px 0; font-size: 1.8em;">ENVIE SEU CONTRATO DE ALUGUEL</h3>
+            <p style="color: #cccccc; font-size: 1.1em; max-width: 600px; margin: 0 auto 30px auto;">
+                Nosso sistema analisa automaticamente cláusulas abusivas e ilegais
+                em contratos de locação residencial
+            </p>
+            <div style="background: rgba(212, 175, 55, 0.1); padding: 20px; border-radius: 10px; display: inline-block;">
+                <p style="margin: 0; color: #d4af37; font-weight: bold;">
+                    🔒 100% SEGURO • Processamento local • Sem armazenamento
+                </p>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Divisor
+        st.markdown('<hr class="gold-divider">', unsafe_allow_html=True)
+        
+        # O que o sistema detecta
+        st.markdown("""
+        <div style="text-align: center; margin: 50px 0;">
+            <h2 style="color: #d4af37; font-size: 2em;">🎯 O QUE ANALISAMOS?</h2>
+            <p style="color: #cccccc; font-size: 1.1em; max-width: 800px; margin: 20px auto;">
+                Nosso sistema inteligente identifica automaticamente as cláusulas mais problemáticas
+                em contratos de aluguel
             </p>
         </div>
         """, unsafe_allow_html=True)
         
-        # Informações sobre o sistema
-        st.markdown("---")
-        st.markdown("""
-        <div style="text-align: center; margin: 40px 0;">
-            <h3 style="color: #1e3a8a;">🎯 O QUE NOSSO SISTEMA DETECTA</h3>
-        </div>
-        """, unsafe_allow_html=True)
-        
+        # Exemplos de problemas em colunas
         col1, col2, col3 = st.columns(3)
         
         with col1:
             st.markdown("""
-            <div style="padding: 20px; background: white; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                <div style="font-size: 2em; text-align: center; margin-bottom: 10px;">📅</div>
-                <h4 style="text-align: center; color: #1e3a8a;">Reajuste Ilegal</h4>
-                <p style="text-align: center; color: #6b7280; font-size: 0.9em;">
-                    Reajuste trimestral, mensal ou semestral
-                </p>
+            <div style="padding: 25px; background: rgba(26, 26, 26, 0.9); border-radius: 15px; text-align: center; height: 100%; border: 1px solid rgba(212, 175, 55, 0.3);">
+                <div style="font-size: 2.5em; margin-bottom: 15px;">🚨</div>
+                <h4 style="color: #ff4444; margin: 10px 0;">PROBLEMAS CRÍTICOS</h4>
+                <ul style="text-align: left; color: #cccccc; padding-left: 20px;">
+                    <li>Reajuste ilegal de aluguel</li>
+                    <li>Garantia dupla (fiador + caução)</li>
+                    <li>Multa abusiva de 12 meses</li>
+                </ul>
             </div>
             """, unsafe_allow_html=True)
         
         with col2:
             st.markdown("""
-            <div style="padding: 20px; background: white; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                <div style="font-size: 2em; text-align: center; margin-bottom: 10px;">🔒</div>
-                <h4 style="text-align: center; color: #1e3a8a;">Garantia Dupla</h4>
-                <p style="text-align: center; color: #6b7280; font-size: 0.9em;">
-                    Exigência de fiador E caução simultaneamente
-                </p>
+            <div style="padding: 25px; background: rgba(26, 26, 26, 0.9); border-radius: 15px; text-align: center; height: 100%; border: 1px solid rgba(212, 175, 55, 0.3);">
+                <div style="font-size: 2.5em; margin-bottom: 15px;">⚠️</div>
+                <h4 style="color: #ffaa44; margin: 10px 0;">ATENÇÃO NECESSÁRIA</h4>
+                <ul style="text-align: left; color: #cccccc; padding-left: 20px;">
+                    <li>Violacão de privacidade</li>
+                    <li>Venda que "despeja" inquilino</li>
+                    <li>Visitas sem aviso prévio</li>
+                </ul>
             </div>
             """, unsafe_allow_html=True)
         
         with col3:
             st.markdown("""
-            <div style="padding: 20px; background: white; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                <div style="font-size: 2em; text-align: center; margin-bottom: 10px;">🏗️</div>
-                <h4 style="text-align: center; color: #1e3a8a;">Benfeitorias</h4>
-                <p style="text-align: center; color: #6b7280; font-size: 0.9em;">
-                    Renúncia ilegal a direito de indenização
-                </p>
+            <div style="padding: 25px; background: rgba(26, 26, 26, 0.9); border-radius: 15px; text-align: center; height: 100%; border: 1px solid rgba(212, 175, 55, 0.3);">
+                <div style="font-size: 2.5em; margin-bottom: 15px;">ℹ️</div>
+                <h4 style="color: #44aaff; margin: 10px 0;">PONTOS IMPORTANTES</h4>
+                <ul style="text-align: left; color: #cccccc; padding-left: 20px;">
+                    <li>Proibição total de animais</li>
+                    <li>Benfeitorias não ressarcidas</li>
+                    <li>Cláusulas ambíguas</li>
+                </ul>
             </div>
             """, unsafe_allow_html=True)
         
+        # Rodapé informativo
         st.markdown("""
-        <div style="text-align: center; margin: 40px 0; padding: 20px; background: #eff6ff; border-radius: 10px;">
-            <h4 style="color: #1e40af;">⚖️ Base Legal</h4>
-            <p style="color: #4b5563;">
-                Nosso sistema utiliza a Lei 8.245/91 (Lei do Inquilinato), 
-                Lei 10.192/01 e o Código de Defesa do Consumidor para identificar
-                cláusulas abusivas e ilegais.
+        <div style="text-align: center; margin: 60px 0 30px 0; padding: 30px; background: rgba(26, 26, 26, 0.7); border-radius: 15px; border-top: 2px solid #d4af37;">
+            <h4 style="color: #d4af37; margin-bottom: 15px;">⚖️ BASE LEGAL DO SISTEMA</h4>
+            <p style="color: #cccccc; max-width: 800px; margin: 0 auto;">
+                Utilizamos a <strong style="color: #ffffff;">Lei 8.245/91 (Lei do Inquilinato)</strong>, 
+                <strong style="color: #ffffff;">Lei 10.192/01</strong> e o 
+                <strong style="color: #ffffff;">Código de Defesa do Consumidor</strong> para identificar 
+                cláusulas abusivas e ilegais em contratos de locação.
+            </p>
+            <p style="color: #999999; margin-top: 20px; font-size: 0.9em;">
+                ⚠️ Este sistema oferece orientação jurídica inicial. Para questões específicas, consulte um advogado.
             </p>
         </div>
         """, unsafe_allow_html=True)
