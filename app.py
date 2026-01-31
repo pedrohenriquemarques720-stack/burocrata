@@ -815,10 +815,6 @@ def main():
                         # Criar um identificador único para o expandable
                         expandable_id = f"expandable_{i}"
                         
-                        # Usar session state para controlar o estado de expansão
-                        if expandable_id not in st.session_state:
-                            st.session_state[expandable_id] = False
-                        
                         # Exibir problema de forma MINIMALISTA
                         st.markdown(f"""
                         <div class="problem-card {classe_css} fade-in">
@@ -907,22 +903,12 @@ def main():
                                 chevron.classList.add('expanded');
                             }}
                         }}
-                        
-                        // Inicializar estado baseado no session state
-                        if ({'true' if st.session_state[expandable_id] else 'false'}) {{
-                            document.getElementById('{expandable_id}_content').classList.add('expanded');
-                            document.getElementById('{expandable_id}_chevron').classList.add('expanded');
-                        }}
                         </script>
                         """, unsafe_allow_html=True)
                         
-                        # Adicionar botão de expansão via Streamlit também
-                        col1, col2 = st.columns([6, 1])
-                        with col2:
-                            if st.button("📋 Detalhes", key=f"btn_{i}"):
-                                st.session_state[expandable_id] = not st.session_state[expandable_id]
-                                st.rerun()
-                        st.markdown("---")
+                        # Adicionar um pequeno divisor entre problemas
+                        if i < len(problemas):
+                            st.markdown('<div style="height: 20px;"></div>', unsafe_allow_html=True)
                 else:
                     # Mensagem quando nenhum problema é encontrado
                     st.markdown("""
@@ -981,7 +967,7 @@ def main():
                             type="primary"
                         )
     else:
-        # Mensagem inicial quando nenhum arquivo foi carregado
+        # Mensagem inicial quando nenhum arquivo foi carregado - APENAS UPLOAD
         st.markdown("""
         <div class="upload-container fade-in">
             <div style="font-size: 5em; color: #d4af37; margin-bottom: 20px;">📄</div>
@@ -995,25 +981,6 @@ def main():
                     🔒 100% SEGURO • Processamento local • Sem armazenamento
                 </p>
             </div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # Divisor
-        st.markdown('<hr class="gold-divider">', unsafe_allow_html=True)
-        
-        # Rodapé informativo (simplificado)
-        st.markdown("""
-        <div style="text-align: center; margin: 60px 0 30px 0; padding: 30px; background: rgba(26, 26, 26, 0.7); border-radius: 15px; border-top: 2px solid #d4af37;">
-            <h4 style="color: #d4af37; margin-bottom: 15px;">⚖️ SISTEMA DE DETECÇÃO INTELIGENTE</h4>
-            <p style="color: #cccccc; max-width: 800px; margin: 0 auto; font-size: 1.1em;">
-                Analisamos automaticamente: <strong style="color: #ff4444;">Reajustes ilegais</strong> • 
-                <strong style="color: #ff4444;">Garantias duplas</strong> • 
-                <strong style="color: #ffaa44;">Violação de privacidade</strong> • 
-                <strong style="color: #44aaff;">Cláusulas abusivas</strong>
-            </p>
-            <p style="color: #999999; margin-top: 20px; font-size: 0.9em;">
-                ⚠️ Baseado na Lei 8.245/91 (Lei do Inquilinato) e Código de Defesa do Consumidor
-            </p>
         </div>
         """, unsafe_allow_html=True)
 
