@@ -32,11 +32,16 @@ st.markdown("""
         color: #ffffff !important;
     }
     
-    /* Inputs e file uploaders - PRETO COM BORDA DOURADA */
+    /* Inputs e file uploaders - PRETO COM BORDA DOURADA MELHORADO */
+    .stFileUploader > div {
+        background-color: #000000 !important;
+    }
+    
     .stFileUploader > div > div {
         background-color: #000000 !important;
         border: 2px solid #d4af37 !important;
         border-radius: 15px !important;
+        color: #ffffff !important;
     }
     
     .stFileUploader > div > div:hover {
@@ -52,6 +57,16 @@ st.markdown("""
     .stFileUploader label p {
         color: #cccccc !important;
         font-weight: normal !important;
+    }
+    
+    /* Ícone dentro do file uploader */
+    .stFileUploader > div > div svg {
+        fill: #d4af37 !important;
+    }
+    
+    /* Texto dentro do file uploader */
+    .stFileUploader > div > div span {
+        color: #ffffff !important;
     }
     
     /* Botões do Streamlit */
@@ -789,7 +804,7 @@ def extrair_texto_pdf_completo(arquivo):
         return None
 
 # --------------------------------------------------
-# INTERFACE PRINCIPAL
+# INTERFACE PRINCIPAL - COM unsafe_allow_html=True CORRETO
 # --------------------------------------------------
 
 def main():
@@ -804,7 +819,7 @@ def main():
     </div>
     """, unsafe_allow_html=True)
     
-    # ÁREA DE EXPLICAÇÃO DA ANÁLISE - TEXTO BRANCO
+    # ÁREA DE EXPLICAÇÃO DA ANÁLISE - TEXTO BRANCO SIMPLIFICADO
     st.markdown("""
     <div class="analysis-container fade-in">
         <div class="analysis-title">🔍 COMO FUNCIONA A ANÁLISE</div>
@@ -828,12 +843,6 @@ def main():
                 <div class="analysis-step-title">4. Recomendações Práticas</div>
                 <div>Para cada problema, oferecemos orientações específicas sobre como proceder legalmente.</div>
             </div>
-            
-            <div style="text-align: center; margin-top: 25px; padding: 15px; background: rgba(212, 175, 55, 0.1); border-radius: 10px; border: 1px solid #d4af37;">
-                <p style="margin: 0; color: #d4af37; font-weight: bold;">
-                    ⚠️ Importante: Esta análise não substitui consulta com advogado especializado.
-                </p>
-            </div>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -851,7 +860,7 @@ def main():
     </div>
     """, unsafe_allow_html=True)
     
-    # File uploader com styling customizado
+    # File uploader com styling customizado - CENTRALIZADO
     col_upload = st.columns([1, 2, 1])[1]
     
     with col_upload:
@@ -859,7 +868,8 @@ def main():
         arquivo = st.file_uploader(
             "Selecione seu contrato de aluguel (PDF)",
             type=["pdf"],
-            help="Arraste ou clique para selecionar seu contrato PDF"
+            help="Arraste ou clique para selecionar seu contrato PDF",
+            key="file_uploader"
         )
     
     # Inicializar sistema
@@ -922,97 +932,87 @@ def main():
                 # Divisor
                 st.markdown('<hr class="gold-divider">', unsafe_allow_html=True)
                 
-                # ÍCONES DOS PROBLEMAS DETECTADOS - TUDO DENTRO DAS CAIXAS VERMELHAS
+                # ÍCONES DOS PROBLEMAS DETECTADOS
                 if problemas:
-                    st.markdown(f"""
+                    st.markdown("""
                     <div style="text-align: center; margin: 30px 0;">
                         <h3 style="color: #d4af37; font-size: 1.8em;">⚠️ CLÁUSULAS ABUSIVAS DETECTADAS</h3>
                         <p style="color: #cccccc; font-size: 1em;">
-                            Passe o mouse sobre cada ícone para ver TODOS os detalhes completos
+                            Passe o mouse sobre cada ícone para ver todos os detalhes
                         </p>
                     </div>
                     """, unsafe_allow_html=True)
                     
-                    st.markdown('<div class="problems-icons-container fade-in">', unsafe_allow_html=True)
+                    # Usar HTML diretamente para evitar problemas de escape
+                    html_icons = """
+                    <div class="problems-icons-container fade-in">
+                    """
                     
-                    # Mostrar ícones
-                    col_count = min(len(problemas), 4)
-                    cols = st.columns(col_count)
-                    
+                    # Adicionar cada ícone
                     for idx, problema in enumerate(problemas):
-                        with cols[idx % col_count]:
-                            classe_css = {
-                                'critical': 'critical-icon',
-                                'medium': 'medium-icon',
-                                'low': 'low-icon'
-                            }.get(problema['gravidade'], 'low-icon')
+                        classe_css = {
+                            'critical': 'critical-icon',
+                            'medium': 'medium-icon',
+                            'low': 'low-icon'
+                        }.get(problema['gravidade'], 'low-icon')
+                        
+                        severidade_css = {
+                            'critical': 'severity-critical',
+                            'medium': 'severity-medium',
+                            'low': 'severity-low'
+                        }.get(problema['gravidade'], 'severity-low')
+                        
+                        texto_severidade = {
+                            'critical': 'CRÍTICO',
+                            'medium': 'MÉDIO',
+                            'low': 'BAIXO'
+                        }.get(problema['gravidade'], 'BAIXO')
+                        
+                        html_icons += f"""
+                        <div class="problem-icon {classe_css}">
+                            <span class="icon-emoji">{problema['icone']}</span>
+                            <div class="icon-title">{problema['nome']}</div>
+                            <span class="icon-severity {severidade_css}">{texto_severidade}</span>
                             
-                            severidade_css = {
-                                'critical': 'severity-critical',
-                                'medium': 'severity-medium',
-                                'low': 'severity-low'
-                            }.get(problema['gravidade'], 'severity-low')
-                            
-                            texto_severidade = {
-                                'critical': 'CRÍTICO',
-                                'medium': 'MÉDIO',
-                                'low': 'BAIXO'
-                            }.get(problema['gravidade'], 'BAIXO')
-                            
-                            st.markdown(f"""
-                            <div class="problem-icon {classe_css}">
-                                <span class="icon-emoji">{problema['icone']}</span>
-                                <div class="icon-title">{problema['nome']}</div>
-                                <span class="icon-severity {severidade_css}">{texto_severidade}</span>
+                            <div class="problem-tooltip">
+                                <div class="tooltip-header">
+                                    <span class="tooltip-emoji">{problema['icone']}</span>
+                                    <span class="tooltip-title">{problema['nome']}</span>
+                                </div>
                                 
-                                <!-- TOOLTIP COM TODOS OS DETALHES COMPLETOS -->
-                                <div class="problem-tooltip">
-                                    <div class="tooltip-header">
-                                        <span class="tooltip-emoji">{problema['icone']}</span>
-                                        <span class="tooltip-title">{problema['nome']}</span>
-                                    </div>
-                                    
-                                    <div class="tooltip-section section-violation">
-                                        <span class="section-label">📝 DESCRIÇÃO DO PROBLEMA</span>
-                                        <span class="section-content">{problema['descricao_detalhada']}</span>
-                                    </div>
-                                    
-                                    <div class="tooltip-divider"></div>
-                                    
-                                    <div class="tooltip-section section-law">
-                                        <span class="section-label">⚖️ BASE LEGAL</span>
-                                        <span class="section-content">{problema['lei']}</span>
-                                    </div>
-                                    
-                                    <div class="tooltip-divider"></div>
-                                    
-                                    <div class="tooltip-section section-context">
-                                        <span class="section-label">🔍 TRECHO ENCONTRADO</span>
-                                        <span class="section-content" style="font-family: monospace; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px; display: block;">
-                                            {problema['contexto']}
-                                        </span>
-                                    </div>
-                                    
-                                    <div class="tooltip-divider"></div>
-                                    
-                                    <div class="tooltip-section section-solution">
-                                        <span class="section-label">✅ AÇÃO RECOMENDADA</span>
-                                        <span class="section-content section-highlight">{problema['contestacao']}</span>
-                                    </div>
-                                    
-                                    <div class="tooltip-divider"></div>
-                                    
-                                    <div class="tooltip-section section-confidence">
-                                        <span class="section-label">🎯 NÍVEL DE CONFIABILIDADE</span>
-                                        <div class="confidence-badge">
-                                            {problema['nivel_confianca']} ({problema['confianca']:.0%})
-                                        </div>
+                                <div class="tooltip-section section-violation">
+                                    <span class="section-label">DESCRIÇÃO DO PROBLEMA</span>
+                                    <span class="section-content">{problema['descricao_detalhada']}</span>
+                                </div>
+                                
+                                <div class="tooltip-divider"></div>
+                                
+                                <div class="tooltip-section section-law">
+                                    <span class="section-label">BASE LEGAL</span>
+                                    <span class="section-content">{problema['lei']}</span>
+                                </div>
+                                
+                                <div class="tooltip-divider"></div>
+                                
+                                <div class="tooltip-section section-solution">
+                                    <span class="section-label">AÇÃO RECOMENDADA</span>
+                                    <span class="section-content section-highlight">{problema['contestacao']}</span>
+                                </div>
+                                
+                                <div class="tooltip-divider"></div>
+                                
+                                <div class="tooltip-section section-confidence">
+                                    <span class="section-label">NÍVEL DE CONFIABILIDADE</span>
+                                    <div class="confidence-badge">
+                                        {problema['nivel_confianca']} ({problema['confianca']:.0%})
                                     </div>
                                 </div>
                             </div>
-                            """, unsafe_allow_html=True)
+                        </div>
+                        """
                     
-                    st.markdown('</div>', unsafe_allow_html=True)
+                    html_icons += "</div>"
+                    st.markdown(html_icons, unsafe_allow_html=True)
                     
                     # Botão para exportar relatório
                     st.markdown('<hr class="gold-divider">', unsafe_allow_html=True)
