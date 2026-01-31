@@ -143,50 +143,208 @@ st.markdown("""
         color: white;
     }
     
-    /* Tooltip para ícones */
+    /* Tooltip para ícones - NOVO DESIGN MELHORADO */
     .problem-tooltip {
         position: absolute;
         bottom: 100%;
         left: 50%;
         transform: translateX(-50%);
-        background: rgba(0, 0, 0, 0.9);
+        background: linear-gradient(135deg, rgba(0, 0, 0, 0.95), rgba(26, 26, 26, 0.95));
         color: white;
-        padding: 15px;
-        border-radius: 10px;
-        width: 300px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-        border: 1px solid #d4af37;
+        padding: 20px;
+        border-radius: 15px;
+        width: 350px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+        border: 2px solid #d4af37;
         z-index: 1000;
         opacity: 0;
         visibility: hidden;
-        transition: opacity 0.3s, visibility 0.3s;
+        transition: all 0.3s ease;
         text-align: left;
+        backdrop-filter: blur(10px);
     }
     
     .problem-icon:hover .problem-tooltip {
         opacity: 1;
         visibility: visible;
+        bottom: calc(100% + 10px);
+    }
+    
+    .tooltip-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+    }
+    
+    .tooltip-emoji {
+        font-size: 2em;
+        margin-right: 15px;
+    }
+    
+    .tooltip-title {
+        flex: 1;
+        font-size: 1.2em;
+        font-weight: bold;
+        color: #d4af37;
     }
     
     .tooltip-section {
-        margin: 10px 0;
-        padding: 10px;
-        border-radius: 8px;
+        margin: 12px 0;
+        padding: 12px;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+    
+    .tooltip-section:hover {
+        transform: translateX(5px);
     }
     
     .tooltip-violation {
-        background: rgba(255, 68, 68, 0.1);
+        background: linear-gradient(90deg, rgba(255, 68, 68, 0.1), transparent);
         border-left: 3px solid #ff4444;
     }
     
     .tooltip-law {
-        background: rgba(212, 175, 55, 0.1);
+        background: linear-gradient(90deg, rgba(212, 175, 55, 0.1), transparent);
         border-left: 3px solid #d4af37;
     }
     
     .tooltip-solution {
-        background: rgba(0, 255, 0, 0.1);
+        background: linear-gradient(90deg, rgba(0, 255, 0, 0.1), transparent);
         border-left: 3px solid #00ff00;
+    }
+    
+    .tooltip-label {
+        font-weight: bold;
+        display: block;
+        margin-bottom: 5px;
+        font-size: 0.9em;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .tooltip-content {
+        font-size: 0.9em;
+        line-height: 1.4;
+    }
+    
+    .confidence-badge {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 0.8em;
+        font-weight: bold;
+        margin-top: 10px;
+        text-align: center;
+        width: 100%;
+    }
+    
+    /* Sistema de detalhes expansíveis */
+    .expandable-card {
+        background: linear-gradient(135deg, rgba(30, 30, 30, 0.9), rgba(20, 20, 20, 0.9));
+        border-radius: 15px;
+        margin: 15px 0;
+        overflow: hidden;
+        border: 1px solid rgba(212, 175, 55, 0.3);
+        transition: all 0.3s ease;
+    }
+    
+    .expandable-card:hover {
+        border-color: #d4af37;
+        box-shadow: 0 5px 20px rgba(212, 175, 55, 0.2);
+    }
+    
+    .card-header {
+        padding: 20px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: rgba(40, 40, 40, 0.5);
+        transition: background 0.3s ease;
+    }
+    
+    .card-header:hover {
+        background: rgba(212, 175, 55, 0.1);
+    }
+    
+    .card-title {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        flex: 1;
+    }
+    
+    .card-icon {
+        font-size: 1.8em;
+    }
+    
+    .card-name {
+        font-size: 1.2em;
+        font-weight: bold;
+        color: #ffffff;
+    }
+    
+    .card-severity {
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 0.8em;
+        font-weight: bold;
+        margin-left: 15px;
+    }
+    
+    .card-arrow {
+        transition: transform 0.3s ease;
+        color: #d4af37;
+        font-size: 1.2em;
+    }
+    
+    .card-expanded .card-arrow {
+        transform: rotate(180deg);
+    }
+    
+    .card-content {
+        padding: 0;
+        max-height: 0;
+        overflow: hidden;
+        transition: all 0.5s ease;
+    }
+    
+    .card-expanded .card-content {
+        padding: 25px;
+        max-height: 1000px;
+    }
+    
+    .content-section {
+        margin: 20px 0;
+    }
+    
+    .section-title {
+        color: #d4af37;
+        font-weight: bold;
+        margin-bottom: 10px;
+        font-size: 1em;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .section-text {
+        color: #cccccc;
+        line-height: 1.6;
+        padding-left: 25px;
+    }
+    
+    .context-box {
+        background: rgba(0, 0, 0, 0.3);
+        padding: 15px;
+        border-radius: 10px;
+        border-left: 3px solid #d4af37;
+        margin: 15px 0;
+        font-style: italic;
+        color: #aaaaaa;
     }
     
     /* Container de upload */
@@ -258,6 +416,11 @@ st.markdown("""
         }
         .icon-emoji {
             font-size: 2em;
+        }
+        .problem-tooltip {
+            width: 280px;
+            left: 50%;
+            transform: translateX(-50%);
         }
     }
     
@@ -342,16 +505,6 @@ class SistemaAuditoriaAltaPrecisao:
                 'icone': '🏗️',
                 'contestacao': 'Guarde notas fiscais de consertos.',
                 'cor': '#ff4444'
-            },
-            'privacidade_violada': {
-                'nome': 'PRIVACIDADE',
-                'gravidade': 'medium',
-                'descricao_curta': 'Visitas sem aviso',
-                'descricao_detalhada': 'Proprietário não pode entrar sem aviso prévio combinado.',
-                'lei': 'Art. 23, IX, Lei 8.245/91',
-                'icone': '👁️',
-                'contestacao': 'Exija visitas agendadas com 24h de antecedência.',
-                'cor': '#ffaa44'
             },
             'multa_abusiva': {
                 'nome': 'MULTA ABUSIVA',
@@ -501,11 +654,6 @@ class SistemaAuditoriaAltaPrecisao:
                 padroes = [
                     r'renuncia.*?(benfeitoria|reforma|obra|melhoria)',
                     r'(nao|não).*?(indeniza|recebe|tem direito|ressarce).*?(benfeitoria|reforma|obra)'
-                ]
-            elif chave == 'privacidade_violada':
-                padroes = [
-                    r'(qualquer|a qualquer|livre).*?(visita|vistoria|ingresso|acesso)',
-                    r'(sem|dispensa|dispensado).*?(aviso|notificação|comunicação).*?(visita|vistoria|entrar)'
                 ]
             elif chave == 'multa_abusiva':
                 padroes = [
@@ -720,7 +868,7 @@ def main():
                 </div>
                 """, unsafe_allow_html=True)
                 
-                # Painel de métricas principal - SIMPLIFICADO
+                # Painel de métricas principal
                 col1, col2, col3 = st.columns(3)
                 
                 with col1:
@@ -752,13 +900,13 @@ def main():
                 # Divisor
                 st.markdown('<hr class="gold-divider">', unsafe_allow_html=True)
                 
-                # ÍCONES DOS PROBLEMAS - DESIGN MINIMALISTA
+                # ÍCONES DOS PROBLEMAS - DESIGN MELHORADO
                 if problemas:
                     st.markdown(f"""
                     <div style="text-align: center; margin: 30px 0;">
                         <h3 style="color: #d4af37; font-size: 1.8em;">🔍 CLÁUSULAS PROBLEMÁTICAS</h3>
                         <p style="color: #cccccc; font-size: 1em;">
-                            Passe o mouse sobre os ícones para detalhes
+                            Passe o mouse sobre os ícones para detalhes completos
                         </p>
                     </div>
                     """, unsafe_allow_html=True)
@@ -799,22 +947,27 @@ def main():
                                 <span class="icon-severity {severidade_css}">{texto_severidade}</span>
                                 
                                 <div class="problem-tooltip">
+                                    <div class="tooltip-header">
+                                        <span class="tooltip-emoji">{problema['icone']}</span>
+                                        <span class="tooltip-title">{problema['nome']}</span>
+                                    </div>
+                                    
                                     <div class="tooltip-section tooltip-violation">
-                                        <strong>❌ Problema:</strong><br>
-                                        {problema['descricao_detalhada']}
+                                        <span class="tooltip-label">❌ Problema Detectado</span>
+                                        <span class="tooltip-content">{problema['descricao_detalhada']}</span>
                                     </div>
                                     
                                     <div class="tooltip-section tooltip-law">
-                                        <strong>⚖️ Lei:</strong><br>
-                                        {problema['lei']}
+                                        <span class="tooltip-label">⚖️ Base Legal</span>
+                                        <span class="tooltip-content">{problema['lei']}</span>
                                     </div>
                                     
                                     <div class="tooltip-section tooltip-solution">
-                                        <strong>✅ Solução:</strong><br>
-                                        {problema['contestacao']}
+                                        <span class="tooltip-label">✅ Como Proceder</span>
+                                        <span class="tooltip-content">{problema['contestacao']}</span>
                                     </div>
                                     
-                                    <div style="margin-top: 10px; font-size: 0.8em; color: #d4af37;">
+                                    <div class="confidence-badge" style="background-color: {problema['cor_confianca']}20; color: {problema['cor_confianca']}; border: 1px solid {problema['cor_confianca']}50;">
                                         Confiança: {problema['nivel_confianca']} ({problema['confianca']:.0%})
                                     </div>
                                 </div>
@@ -822,6 +975,109 @@ def main():
                             """, unsafe_allow_html=True)
                     
                     st.markdown('</div>', unsafe_allow_html=True)
+                    
+                    # ANÁLISE DETALHADA EXPANSÍVEL
+                    st.markdown('<hr class="gold-divider">', unsafe_allow_html=True)
+                    
+                    st.markdown("""
+                    <div style="text-align: center; margin: 30px 0;">
+                        <h3 style="color: #d4af37; font-size: 1.8em;">📋 ANÁLISE DETALHADA</h3>
+                        <p style="color: #cccccc; font-size: 1em;">
+                            Clique em cada item para expandir e ver detalhes completos
+                        </p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    # JavaScript para expandir/colapsar
+                    st.markdown("""
+                    <script>
+                    function toggleCard(cardId) {
+                        const card = document.getElementById(cardId);
+                        const content = card.querySelector('.card-content');
+                        const arrow = card.querySelector('.card-arrow');
+                        
+                        if (card.classList.contains('card-expanded')) {
+                            card.classList.remove('card-expanded');
+                            content.style.maxHeight = '0';
+                            arrow.style.transform = 'rotate(0deg)';
+                        } else {
+                            card.classList.add('card-expanded');
+                            content.style.maxHeight = content.scrollHeight + 'px';
+                            arrow.style.transform = 'rotate(180deg)';
+                        }
+                    }
+                    
+                    // Adicionar event listeners após o carregamento
+                    document.addEventListener('DOMContentLoaded', function() {
+                        setTimeout(function() {
+                            const cards = document.querySelectorAll('.expandable-card');
+                            cards.forEach((card, index) => {
+                                card.addEventListener('click', function(e) {
+                                    if (!e.target.closest('.card-arrow')) {
+                                        toggleCard(this.id);
+                                    }
+                                });
+                            });
+                        }, 1000);
+                    });
+                    </script>
+                    """, unsafe_allow_html=True)
+                    
+                    # Cards expansíveis para cada problema
+                    for idx, problema in enumerate(problemas):
+                        # Determinar cor da severidade
+                        cor_severidade = {
+                            'critical': '#ff4444',
+                            'medium': '#ffaa44',
+                            'low': '#44aaff'
+                        }.get(problema['gravidade'], '#44aaff')
+                        
+                        st.markdown(f"""
+                        <div class="expandable-card" id="card-{idx}">
+                            <div class="card-header">
+                                <div class="card-title">
+                                    <span class="card-icon">{problema['icone']}</span>
+                                    <span class="card-name">{problema['nome']}</span>
+                                    <span class="card-severity" style="background-color: {cor_severidade}30; color: {cor_severidade}; border: 1px solid {cor_severidade}50;">
+                                        {texto_severidade}
+                                    </span>
+                                </div>
+                                <span class="card-arrow">▼</span>
+                            </div>
+                            <div class="card-content">
+                                <div class="content-section">
+                                    <div class="section-title">📝 <span>Descrição do Problema</span></div>
+                                    <div class="section-text">{problema['descricao_detalhada']}</div>
+                                </div>
+                                
+                                <div class="content-section">
+                                    <div class="section-title">⚖️ <span>Base Legal</span></div>
+                                    <div class="section-text">{problema['lei']}</div>
+                                </div>
+                                
+                                <div class="content-section">
+                                    <div class="section-title">✅ <span>Recomendação de Ação</span></div>
+                                    <div class="section-text">{problema['contestacao']}</div>
+                                </div>
+                                
+                                <div class="content-section">
+                                    <div class="section-title">🎯 <span>Nível de Confiança</span></div>
+                                    <div class="section-text">
+                                        <div style="display: inline-block; padding: 5px 15px; border-radius: 20px; background-color: {problema['cor_confianca']}20; color: {problema['cor_confianca']}; border: 1px solid {problema['cor_confianca']}50;">
+                                            {problema['nivel_confianca']} ({problema['confianca']:.0%})
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                {f'''
+                                <div class="content-section">
+                                    <div class="section-title">🔍 <span>Trecho Encontrado</span></div>
+                                    <div class="context-box">{problema['contexto']}</div>
+                                </div>
+                                ''' if problema['contexto'] else ''}
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
                 else:
                     # Mensagem quando nenhum problema é encontrado
                     st.markdown("""
@@ -860,7 +1116,7 @@ def main():
                     col1, col2, col3 = st.columns([1, 2, 1])
                     with col2:
                         st.download_button(
-                            label="📥 BAIXAR RELATÓRIO",
+                            label="📥 BAIXAR RELATÓRIO COMPLETO",
                             data=csv_str,
                             file_name=f"relatorio_contrato_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
                             mime="text/csv",
