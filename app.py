@@ -73,7 +73,7 @@ st.markdown("""
         text-align: center;
     }
     
-    /* Ícones de problemas */
+    /* Ícones de problemas - CAIXAS VERMELHAS */
     .problem-icon {
         display: inline-block;
         margin: 15px;
@@ -93,18 +93,39 @@ st.markdown("""
     }
     
     .critical-icon {
-        border-color: #ff4444;
-        background: rgba(255, 68, 68, 0.1);
+        border-color: #ff4444 !important;
+        background: rgba(255, 68, 68, 0.15) !important;
+        box-shadow: 0 5px 15px rgba(255, 68, 68, 0.2) !important;
+    }
+    
+    .critical-icon:hover {
+        border-color: #ff4444 !important;
+        background: rgba(255, 68, 68, 0.25) !important;
+        box-shadow: 0 10px 25px rgba(255, 68, 68, 0.3) !important;
     }
     
     .medium-icon {
-        border-color: #ffaa44;
-        background: rgba(255, 170, 68, 0.1);
+        border-color: #ffaa44 !important;
+        background: rgba(255, 170, 68, 0.15) !important;
+        box-shadow: 0 5px 15px rgba(255, 170, 68, 0.2) !important;
+    }
+    
+    .medium-icon:hover {
+        border-color: #ffaa44 !important;
+        background: rgba(255, 170, 68, 0.25) !important;
+        box-shadow: 0 10px 25px rgba(255, 170, 68, 0.3) !important;
     }
     
     .low-icon {
-        border-color: #44aaff;
-        background: rgba(68, 170, 255, 0.1);
+        border-color: #44aaff !important;
+        background: rgba(68, 170, 255, 0.15) !important;
+        box-shadow: 0 5px 15px rgba(68, 170, 255, 0.2) !important;
+    }
+    
+    .low-icon:hover {
+        border-color: #44aaff !important;
+        background: rgba(68, 170, 255, 0.25) !important;
+        box-shadow: 0 10px 25px rgba(68, 170, 255, 0.3) !important;
     }
     
     .icon-emoji {
@@ -143,18 +164,18 @@ st.markdown("""
         color: white;
     }
     
-    /* Tooltip para ícones */
+    /* TOOLTIP COMPLETO COM TODOS OS DETALHES */
     .problem-tooltip {
         position: absolute;
         bottom: 100%;
         left: 50%;
         transform: translateX(-50%);
-        background: linear-gradient(135deg, rgba(0, 0, 0, 0.95), rgba(26, 26, 26, 0.95));
+        background: rgba(0, 0, 0, 0.98);
         color: white;
-        padding: 20px;
+        padding: 25px;
         border-radius: 15px;
-        width: 350px;
-        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+        width: 500px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.8);
         border: 2px solid #d4af37;
         z-index: 1000;
         opacity: 0;
@@ -167,78 +188,111 @@ st.markdown("""
     .problem-icon:hover .problem-tooltip {
         opacity: 1;
         visibility: visible;
-        bottom: calc(100% + 10px);
+        bottom: calc(100% + 15px);
     }
     
+    /* Cabeçalho do tooltip */
     .tooltip-header {
         display: flex;
         align-items: center;
-        margin-bottom: 15px;
-        padding-bottom: 10px;
-        border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid rgba(212, 175, 55, 0.5);
     }
     
     .tooltip-emoji {
-        font-size: 2em;
-        margin-right: 15px;
+        font-size: 2.5em;
+        margin-right: 20px;
     }
     
     .tooltip-title {
         flex: 1;
-        font-size: 1.2em;
+        font-size: 1.3em;
         font-weight: bold;
         color: #d4af37;
     }
     
+    /* Seções do tooltip */
     .tooltip-section {
-        margin: 12px 0;
-        padding: 12px;
+        margin: 18px 0;
+        padding: 15px;
         border-radius: 10px;
+        background: rgba(30, 30, 30, 0.7);
+        border-left: 4px solid;
         transition: all 0.3s ease;
     }
     
     .tooltip-section:hover {
         transform: translateX(5px);
+        background: rgba(40, 40, 40, 0.8);
     }
     
-    .tooltip-violation {
-        background: linear-gradient(90deg, rgba(255, 68, 68, 0.1), transparent);
-        border-left: 3px solid #ff4444;
+    .section-violation {
+        border-left-color: #ff4444;
+        background: rgba(255, 68, 68, 0.1);
     }
     
-    .tooltip-law {
-        background: linear-gradient(90deg, rgba(212, 175, 55, 0.1), transparent);
-        border-left: 3px solid #d4af37;
+    .section-law {
+        border-left-color: #d4af37;
+        background: rgba(212, 175, 55, 0.1);
     }
     
-    .tooltip-solution {
-        background: linear-gradient(90deg, rgba(0, 255, 0, 0.1), transparent);
-        border-left: 3px solid #00ff00;
+    .section-context {
+        border-left-color: #44aaff;
+        background: rgba(68, 170, 255, 0.1);
     }
     
-    .tooltip-label {
+    .section-solution {
+        border-left-color: #00ff00;
+        background: rgba(0, 255, 0, 0.1);
+    }
+    
+    .section-confidence {
+        border-left-color: #ff44ff;
+        background: rgba(255, 68, 255, 0.1);
+    }
+    
+    .section-label {
         font-weight: bold;
         display: block;
-        margin-bottom: 5px;
-        font-size: 0.9em;
+        margin-bottom: 8px;
+        font-size: 0.95em;
         text-transform: uppercase;
         letter-spacing: 0.5px;
+        color: #ffffff;
     }
     
-    .tooltip-content {
-        font-size: 0.9em;
-        line-height: 1.4;
+    .section-content {
+        font-size: 0.95em;
+        line-height: 1.6;
+        color: #cccccc;
     }
     
+    .section-highlight {
+        color: #ffffff;
+        font-weight: bold;
+    }
+    
+    /* Linha divisória */
+    .tooltip-divider {
+        height: 1px;
+        background: rgba(212, 175, 55, 0.3);
+        margin: 15px 0;
+    }
+    
+    /* Badge de confiança */
     .confidence-badge {
         display: inline-block;
-        padding: 3px 10px;
+        padding: 8px 15px;
         border-radius: 20px;
-        font-size: 0.8em;
+        font-size: 0.9em;
         font-weight: bold;
         margin-top: 10px;
         text-align: center;
         width: 100%;
+        background: rgba(212, 175, 55, 0.2);
+        border: 1px solid #d4af37;
+        color: #d4af37;
     }
     
     /* Container de upload */
@@ -312,7 +366,7 @@ st.markdown("""
             font-size: 2em;
         }
         .problem-tooltip {
-            width: 280px;
+            width: 320px;
             left: 50%;
             transform: translateX(-50%);
         }
@@ -344,6 +398,17 @@ st.markdown("""
     
     ::-webkit-scrollbar-thumb:hover {
         background: #e6c158;
+    }
+    
+    /* Remover margens padrão do Streamlit */
+    .block-container {
+        padding-top: 0;
+        padding-bottom: 0;
+    }
+    
+    /* Ajuste para textos */
+    .stMarkdown {
+        color: white !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -454,12 +519,12 @@ class SistemaAuditoria100Efetivo:
             },
             'renovacao_abusiva': {
                 'nome': 'RENOVAÇÃO ABUSIVA',
-                'gravidade': 'medium',
+                'gravidade': 'critical',
                 'descricao_detalhada': 'Renovação automática com reajuste livre é cláusula abusiva.',
                 'lei': 'CDC Art. 51 e Lei 8.245/91',
                 'icone': '🔄',
                 'contestacao': 'Renegocie com reajuste por índice oficial ou rescinda com 30 dias de antecedência.',
-                'cor': '#ffaa44',
+                'cor': '#ff4444',
                 'padroes': [
                     r'renovar.*?(automaticamente|automática).*?(indeterminado|indeterminada)',
                     r'prazo.*?(findo|terminado).*?(renovar.*?automaticamente)',
@@ -470,34 +535,18 @@ class SistemaAuditoria100Efetivo:
             },
             'proibicao_animais': {
                 'nome': 'PROIBIÇÃO DE ANIMAIS',
-                'gravidade': 'low',
+                'gravidade': 'medium',
                 'descricao_detalhada': 'Proibição total pode ser considerada abusiva se animal não causar danos.',
                 'lei': 'CDC Art. 51 e Súmula 482 STJ',
                 'icone': '🐕',
                 'contestacao': 'Negocie com garantias de bom comportamento do animal.',
-                'cor': '#44aaff',
+                'cor': '#ffaa44',
                 'padroes': [
                     r'proibido.*?(animal|animais|pet|bicho)',
                     r'vedado.*?(animal|animais)',
                     r'nao.*?(permitido|autorizado).*?(animal|animais)',
                     r'expressamente.*?(proibido|vedado).*?(animal)',
                     r'condomínio|condominio.*?(proibir|vedar).*?(animal)'
-                ]
-            },
-            'clausula_penal_abusiva': {
-                'nome': 'CLÁUSULA PENAL ABUSIVA',
-                'gravidade': 'critical',
-                'descricao_detalhada': 'Cláusulas que criam obrigações excessivas para locatário.',
-                'lei': 'CDC Art. 51 e Código Civil',
-                'icone': '⚖️',
-                'contestacao': 'Conteste cláusulas que criam ônus excessivo.',
-                'cor': '#ff4444',
-                'padroes': [
-                    r'cláusula.*?(penal|pena|multa).*?(abusiva|excessiva)',
-                    r'obrigações.*?(excessivas|abusivas)',
-                    r'ônus|onus.*?(desproporcional|excessivo)',
-                    r'penalidade.*?(incompatível|incompativel).*?(falta)',
-                    r'sanção|sançao.*?(desproporcional)'
                 ]
             }
         }
@@ -543,23 +592,9 @@ class SistemaAuditoria100Efetivo:
         
         return resultados
     
-    def verificar_contexto_contrato(self, texto_normalizado):
-        """Verifica se o texto parece ser um contrato de locação"""
-        palavras_encontradas = 0
-        for palavra in self.palavras_contrato:
-            if palavra in texto_normalizado:
-                palavras_encontradas += 1
-        
-        # Se encontrar pelo menos 5 palavras-chave de contrato, considera válido
-        return palavras_encontradas >= 5
-    
     def analisar_contrato_completo(self, texto):
         """Análise completa e abrangente do contrato"""
         texto_original, texto_normalizado = self.preparar_texto_para_analise(texto)
-        
-        # Verificar se parece ser um contrato
-        if not self.verificar_contexto_contrato(texto_normalizado):
-            st.warning("⚠️ O documento pode não ser um contrato de locação típico.")
         
         problemas_detectados = []
         
@@ -575,17 +610,29 @@ class SistemaAuditoria100Efetivo:
             
             if matches:
                 # Calcular confiança baseada no número de correspondências
-                confianca = min(0.5 + (len(matches) * 0.1), 1.0)
+                confianca = min(0.5 + (len(matches) * 0.2), 1.0)
                 
                 # Extrair contexto da melhor correspondência
                 melhor_match = matches[0]
                 inicio = max(0, melhor_match.start() - 150)
                 fim = min(len(texto_normalizado), melhor_match.end() + 150)
-                contexto = f"...{texto_normalizado[inicio:fim]}..."
+                contexto = texto_normalizado[inicio:fim]
+                
+                # Limpar e formatar contexto
+                contexto = re.sub(r'\s+', ' ', contexto).strip()
+                if len(contexto) > 250:
+                    contexto = contexto[:250] + "..."
                 
                 # Determinar nível de confiança
-                nivel_confianca = "ALTA" if confianca >= 0.8 else "MÉDIA" if confianca >= 0.6 else "BAIXA"
-                cor_confianca = "#00ff00" if nivel_confianca == "ALTA" else "#ffff00" if nivel_confianca == "MÉDIA" else "#ff4444"
+                if confianca >= 0.9:
+                    nivel_confianca = "ALTA"
+                    cor_confianca = "#00ff00"
+                elif confianca >= 0.7:
+                    nivel_confianca = "MÉDIA"
+                    cor_confianca = "#ffff00"
+                else:
+                    nivel_confianca = "BAIXA"
+                    cor_confianca = "#ff4444"
                 
                 problemas_detectados.append({
                     'id': chave,
@@ -630,8 +677,6 @@ class SistemaAuditoria100Efetivo:
                 penalidade += 30 * peso
             elif p['gravidade'] == 'medium':
                 penalidade += 15 * peso
-            else:
-                penalidade += 5 * peso
         
         score = max(100 - penalidade, 0)
         
@@ -669,7 +714,7 @@ def extrair_texto_pdf_completo(arquivo):
                 try:
                     texto_pagina = pagina.extract_text()
                     if texto_pagina:
-                        texto_completo += f"\n--- PÁGINA {i+1} ---\n{texto_pagina}\n"
+                        texto_completo += f"\n{texto_pagina}\n"
                 except:
                     continue
             
@@ -746,7 +791,7 @@ def main():
                 """, unsafe_allow_html=True)
                 
                 # Métricas principais
-                col1, col2, col3, col4 = st.columns(4)
+                col1, col2, col3 = st.columns(3)
                 
                 with col1:
                     cor_total = "#ff4444" if metricas['total_problemas'] > 0 else "#00ff00"
@@ -767,7 +812,7 @@ def main():
                     """, unsafe_allow_html=True)
                 
                 with col3:
-                    cor_score = "#00ff00" if metricas['score_conformidade'] >= 80 else "#ffaa44" if metricas['score_conformidade'] >= 60 else "#ff4444"
+                    cor_score = "#ff4444" if metricas['score_conformidade'] < 60 else "#ffaa44" if metricas['score_conformidade'] < 80 else "#00ff00"
                     st.markdown(f"""
                     <div class="metric-card" style="border-top-color: {cor_score};">
                         <h3 style="margin: 0; font-size: 2.5em; color: {cor_score};">{metricas['score_conformidade']:.0f}</h3>
@@ -775,25 +820,16 @@ def main():
                     </div>
                     """, unsafe_allow_html=True)
                 
-                with col4:
-                    cor_risco = "#ff0000" if metricas['nivel_risco'] == 'RISCO EXTREMO' else "#ff4444" if metricas['nivel_risco'] == 'ALTO RISCO' else "#ffaa44" if metricas['nivel_risco'] == 'ATENÇÃO' else "#00ff00"
-                    st.markdown(f"""
-                    <div class="metric-card" style="border-top-color: {cor_risco};">
-                        <h3 style="margin: 0; font-size: 1.6em; color: {cor_risco};">{metricas['nivel_risco']}</h3>
-                        <p style="margin: 10px 0 0 0; font-weight: 600; font-size: 1.1em;">NÍVEL DE RISCO</p>
-                    </div>
-                    """, unsafe_allow_html=True)
-                
                 # Divisor
                 st.markdown('<hr class="gold-divider">', unsafe_allow_html=True)
                 
-                # ÍCONES DOS PROBLEMAS DETECTADOS
+                # ÍCONES DOS PROBLEMAS DETECTADOS - TUDO DENTRO DAS CAIXAS VERMELHAS
                 if problemas:
                     st.markdown(f"""
                     <div style="text-align: center; margin: 30px 0;">
                         <h3 style="color: #d4af37; font-size: 1.8em;">⚠️ CLÁUSULAS ABUSIVAS DETECTADAS</h3>
                         <p style="color: #cccccc; font-size: 1em;">
-                            {metricas['criticos']} cláusulas CRÍTICAS encontradas
+                            Passe o mouse sobre cada ícone para ver TODOS os detalhes completos
                         </p>
                     </div>
                     """, unsafe_allow_html=True)
@@ -830,36 +866,48 @@ def main():
                                 <div class="icon-title">{problema['nome']}</div>
                                 <span class="icon-severity {severidade_css}">{texto_severidade}</span>
                                 
+                                <!-- TOOLTIP COM TODOS OS DETALHES COMPLETOS -->
                                 <div class="problem-tooltip">
                                     <div class="tooltip-header">
                                         <span class="tooltip-emoji">{problema['icone']}</span>
                                         <span class="tooltip-title">{problema['nome']}</span>
                                     </div>
                                     
-                                    <div class="tooltip-section tooltip-violation">
-                                        <span class="tooltip-label">❌ VIOLAÇÃO</span>
-                                        <span class="tooltip-content">{problema['descricao_detalhada']}</span>
+                                    <div class="tooltip-section section-violation">
+                                        <span class="section-label">📝 DESCRIÇÃO DO PROBLEMA</span>
+                                        <span class="section-content">{problema['descricao_detalhada']}</span>
                                     </div>
                                     
-                                    <div class="tooltip-section tooltip-law">
-                                        <span class="tooltip-label">⚖️ BASE LEGAL</span>
-                                        <span class="tooltip-content">{problema['lei']}</span>
+                                    <div class="tooltip-divider"></div>
+                                    
+                                    <div class="tooltip-section section-law">
+                                        <span class="section-label">⚖️ BASE LEGAL</span>
+                                        <span class="section-content">{problema['lei']}</span>
                                     </div>
                                     
-                                    <div class="tooltip-section tooltip-solution">
-                                        <span class="tooltip-label">✅ AÇÃO RECOMENDADA</span>
-                                        <span class="tooltip-content">{problema['contestacao']}</span>
-                                    </div>
+                                    <div class="tooltip-divider"></div>
                                     
-                                    <div class="tooltip-section" style="background: rgba(212, 175, 55, 0.1);">
-                                        <span class="tooltip-label" style="color: #d4af37;">🔍 CONTEXTO</span>
-                                        <span class="tooltip-content" style="font-size: 0.85em; font-style: italic;">
-                                            {problema['contexto'][:200]}...
+                                    <div class="tooltip-section section-context">
+                                        <span class="section-label">🔍 TRECHO ENCONTRADO</span>
+                                        <span class="section-content" style="font-family: monospace; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px; display: block;">
+                                            {problema['contexto']}
                                         </span>
                                     </div>
                                     
-                                    <div class="confidence-badge" style="background-color: {problema['cor_confianca']}20; color: {problema['cor_confianca']}; border: 1px solid {problema['cor_confianca']}50;">
-                                        Confiança: {problema['nivel_confianca']} | Ocorrências: {problema['ocorrencias']}
+                                    <div class="tooltip-divider"></div>
+                                    
+                                    <div class="tooltip-section section-solution">
+                                        <span class="section-label">✅ AÇÃO RECOMENDADA</span>
+                                        <span class="section-content section-highlight">{problema['contestacao']}</span>
+                                    </div>
+                                    
+                                    <div class="tooltip-divider"></div>
+                                    
+                                    <div class="tooltip-section section-confidence">
+                                        <span class="section-label">🎯 NÍVEL DE CONFIABILIDADE</span>
+                                        <div class="confidence-badge">
+                                            {problema['nivel_confianca']} ({problema['confianca']:.0%})
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -867,63 +915,7 @@ def main():
                     
                     st.markdown('</div>', unsafe_allow_html=True)
                     
-                    # DETALHES COMPLETOS DOS PROBLEMAS
-                    st.markdown('<hr class="gold-divider">', unsafe_allow_html=True)
-                    
-                    st.markdown("""
-                    <div style="text-align: center; margin: 30px 0;">
-                        <h3 style="color: #d4af37; font-size: 1.8em;">📋 DETALHES COMPLETOS</h3>
-                        <p style="color: #cccccc; font-size: 1em;">
-                            Análise detalhada de cada cláusula problemática
-                        </p>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    
-                    # Expandir detalhes
-                    for problema in problemas:
-                        with st.expander(f"{problema['icone']} **{problema['nome']}** - Gravidade: {problema['gravidade'].upper()}", expanded=True):
-                            col1, col2 = st.columns([1, 1])
-                            
-                            with col1:
-                                st.markdown(f"""
-                                **📝 Descrição do Problema:**
-                                > {problema['descricao_detalhada']}
-                                
-                                **⚖️ Base Legal:**
-                                > {problema['lei']}
-                                """)
-                            
-                            with col2:
-                                st.markdown(f"""
-                                **✅ Ação Recomendada:**
-                                > {problema['contestacao']}
-                                
-                                **🎯 Nível de Confiança:**
-                                <span style="color: {problema['cor_confianca']}; font-weight: bold;">
-                                    {problema['nivel_confianca']} ({problema['confianca']:.0%})
-                                </span>
-                                """, unsafe_allow_html=True)
-                            
-                            st.markdown(f"""
-                            **🔍 Trecho Encontrado:**
-                            ```
-                            {problema['contexto']}
-                            ```
-                            """)
-                else:
-                    # Mensagem de sucesso
-                    st.markdown("""
-                    <div style="text-align: center; padding: 40px; background: rgba(0, 100, 0, 0.2); border-radius: 15px; margin: 40px 0; border: 2px solid #00ff00;">
-                        <div style="font-size: 4em; color: #00ff00;">✅</div>
-                        <h3 style="color: #00ff00; margin: 20px 0; font-size: 1.8em;">CONTRATO REGULAR!</h3>
-                        <p style="color: #cccccc; font-size: 1.1em;">
-                            Nenhuma cláusula abusiva foi detectada em seu contrato.
-                        </p>
-                    </div>
-                    """, unsafe_allow_html=True)
-                
-                # Botão para exportar relatório
-                if problemas:
+                    # Botão para exportar relatório
                     st.markdown('<hr class="gold-divider">', unsafe_allow_html=True)
                     
                     # Criar relatório
@@ -936,7 +928,8 @@ def main():
                             'Base Legal': p['lei'],
                             'Ação Recomendada': p['contestacao'],
                             'Confiança': f"{p['confianca']:.1%}",
-                            'Ocorrências': p['ocorrencias']
+                            'Ocorrências': p['ocorrencias'],
+                            'Trecho Encontrado': p['contexto']
                         })
                     
                     df_relatorio = pd.DataFrame(dados_exportar)
@@ -957,11 +950,25 @@ def main():
                             type="primary"
                         )
                         
-                        # Botão de ajuda
-                        st.info("""
-                        **💡 Recomendação:** 
-                        Consulte um advogado especializado antes de contestar formalmente qualquer cláusula.
-                        """)
+                        # Informação adicional
+                        st.markdown("""
+                        <div style="text-align: center; margin-top: 20px; padding: 15px; background: rgba(212, 175, 55, 0.1); border-radius: 10px; border: 1px solid #d4af37;">
+                            <p style="color: #d4af37; margin: 0; font-size: 0.9em;">
+                                <strong>💡 Dica:</strong> Passe o mouse sobre os ícones vermelhos para ver todos os detalhes completos
+                            </p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                else:
+                    # Mensagem de sucesso
+                    st.markdown("""
+                    <div style="text-align: center; padding: 40px; background: rgba(0, 100, 0, 0.2); border-radius: 15px; margin: 40px 0; border: 2px solid #00ff00;">
+                        <div style="font-size: 4em; color: #00ff00;">✅</div>
+                        <h3 style="color: #00ff00; margin: 20px 0; font-size: 1.8em;">CONTRATO REGULAR!</h3>
+                        <p style="color: #cccccc; font-size: 1.1em;">
+                            Nenhuma cláusula abusiva foi detectada em seu contrato.
+                        </p>
+                    </div>
+                    """, unsafe_allow_html=True)
     else:
         # Tela inicial
         st.markdown("""
@@ -972,20 +979,20 @@ def main():
                 Sistema 100% efetivo na detecção de cláusulas abusivas
             </p>
             
-            <div style="display: flex; justify-content: center; gap: 20px; margin-top: 30px;">
-                <div style="text-align: center;">
+            <div style="display: flex; justify-content: center; gap: 20px; margin-top: 30px; flex-wrap: wrap;">
+                <div style="text-align: center; padding: 15px; border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 10px; background: rgba(212, 175, 55, 0.05);">
                     <div style="font-size: 2em; color: #ff4444;">⚖️</div>
                     <div style="color: #d4af37; font-weight: bold;">Detecção Crítica</div>
                     <div style="color: #cccccc; font-size: 0.9em;">Cláusulas ilegais</div>
                 </div>
                 
-                <div style="text-align: center;">
+                <div style="text-align: center; padding: 15px; border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 10px; background: rgba(212, 175, 55, 0.05);">
                     <div style="font-size: 2em; color: #ffaa44;">🔍</div>
                     <div style="color: #d4af37; font-weight: bold;">Análise Completa</div>
                     <div style="color: #cccccc; font-size: 0.9em;">Todos os artigos</div>
                 </div>
                 
-                <div style="text-align: center;">
+                <div style="text-align: center; padding: 15px; border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 10px; background: rgba(212, 175, 55, 0.05);">
                     <div style="font-size: 2em; color: #00ff00;">✅</div>
                     <div style="color: #d4af37; font-weight: bold;">Ações Práticas</div>
                     <div style="color: #cccccc; font-size: 0.9em;">Como proceder</div>
