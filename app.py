@@ -28,8 +28,50 @@ st.markdown("""
     }
     
     /* Títulos e texto geral */
-    h1, h2, h3, h4, h5, h6, p, span, div {
+    h1, h2, h3, h4, h5, h6, p, span, div, label {
         color: #ffffff !important;
+    }
+    
+    /* Inputs e file uploaders - PRETO COM BORDA DOURADA */
+    .stFileUploader > div > div {
+        background-color: #000000 !important;
+        border: 2px solid #d4af37 !important;
+        border-radius: 15px !important;
+    }
+    
+    .stFileUploader > div > div:hover {
+        border-color: #e6c158 !important;
+        box-shadow: 0 0 15px rgba(212, 175, 55, 0.3) !important;
+    }
+    
+    .stFileUploader label {
+        color: #ffffff !important;
+        font-weight: 600 !important;
+    }
+    
+    .stFileUploader label p {
+        color: #cccccc !important;
+        font-weight: normal !important;
+    }
+    
+    /* Botões do Streamlit */
+    .stButton > button {
+        background: linear-gradient(135deg, #d4af37, #b8941f) !important;
+        color: #000000 !important;
+        border: none !important;
+        padding: 12px 30px !important;
+        border-radius: 25px !important;
+        font-weight: 700 !important;
+        font-size: 1em !important;
+        transition: all 0.3s ease !important;
+        text-transform: uppercase !important;
+        letter-spacing: 1px !important;
+    }
+    
+    .stButton > button:hover {
+        background: linear-gradient(135deg, #e6c158, #d4af37) !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 5px 15px rgba(212, 175, 55, 0.4) !important;
     }
     
     /* Cabeçalho principal */
@@ -295,7 +337,7 @@ st.markdown("""
         color: #d4af37;
     }
     
-    /* Container de upload */
+    /* Container de upload customizado */
     .upload-container {
         border: 3px dashed #d4af37;
         border-radius: 20px;
@@ -310,26 +352,6 @@ st.markdown("""
     .upload-container:hover {
         background: rgba(40, 40, 40, 0.7);
         border-color: #e6c158;
-    }
-    
-    /* Botões dourados */
-    .gold-button {
-        background: linear-gradient(135deg, #d4af37, #b8941f);
-        color: #000000 !important;
-        border: none;
-        padding: 12px 30px;
-        border-radius: 25px;
-        font-weight: 700;
-        font-size: 1em;
-        transition: all 0.3s ease;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-    
-    .gold-button:hover {
-        background: linear-gradient(135deg, #e6c158, #d4af37);
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(212, 175, 55, 0.4);
     }
     
     /* Linhas divisorias douradas */
@@ -350,6 +372,45 @@ st.markdown("""
         background: rgba(0, 255, 0, 0.1);
         color: #00ff00;
         border: 1px solid rgba(0, 255, 0, 0.3);
+    }
+    
+    /* Container de análise/explicação - TEXTO BRANCO */
+    .analysis-container {
+        background: rgba(20, 20, 20, 0.9);
+        padding: 30px;
+        border-radius: 15px;
+        margin: 30px 0;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+        border: 1px solid rgba(212, 175, 55, 0.3);
+        color: #ffffff;
+    }
+    
+    .analysis-title {
+        color: #d4af37;
+        font-size: 1.4em;
+        font-weight: bold;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+    
+    .analysis-content {
+        color: #ffffff;
+        line-height: 1.6;
+        font-size: 1em;
+    }
+    
+    .analysis-step {
+        margin: 15px 0;
+        padding: 15px;
+        background: rgba(30, 30, 30, 0.7);
+        border-radius: 10px;
+        border-left: 4px solid #d4af37;
+    }
+    
+    .analysis-step-title {
+        color: #d4af37;
+        font-weight: bold;
+        margin-bottom: 5px;
     }
     
     /* Responsividade */
@@ -743,10 +804,44 @@ def main():
     </div>
     """, unsafe_allow_html=True)
     
-    # Inicializar sistema
-    auditoria = SistemaAuditoria100Efetivo()
+    # ÁREA DE EXPLICAÇÃO DA ANÁLISE - TEXTO BRANCO
+    st.markdown("""
+    <div class="analysis-container fade-in">
+        <div class="analysis-title">🔍 COMO FUNCIONA A ANÁLISE</div>
+        <div class="analysis-content">
+            <div class="analysis-step">
+                <div class="analysis-step-title">1. Upload do Contrato</div>
+                <div>Envie seu contrato de aluguel em formato PDF. O sistema processa o texto automaticamente.</div>
+            </div>
+            
+            <div class="analysis-step">
+                <div class="analysis-step-title">2. Análise Inteligente</div>
+                <div>Nosso sistema verifica mais de 50 padrões de cláusulas abusivas baseadas na Lei do Inquilinato e Código Civil.</div>
+            </div>
+            
+            <div class="analysis-step">
+                <div class="analysis-step-title">3. Detecção de Problemas</div>
+                <div>Cláusulas problemáticas são identificadas com nível de gravidade (Crítico, Médio, Baixo).</div>
+            </div>
+            
+            <div class="analysis-step">
+                <div class="analysis-step-title">4. Recomendações Práticas</div>
+                <div>Para cada problema, oferecemos orientações específicas sobre como proceder legalmente.</div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 25px; padding: 15px; background: rgba(212, 175, 55, 0.1); border-radius: 10px; border: 1px solid #d4af37;">
+                <p style="margin: 0; color: #d4af37; font-weight: bold;">
+                    ⚠️ Importante: Esta análise não substitui consulta com advogado especializado.
+                </p>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
     
-    # Área de upload
+    # Divisor
+    st.markdown('<hr class="gold-divider">', unsafe_allow_html=True)
+    
+    # ÁREA DE UPLOAD - PRETO COM BORDA DOURADA
     st.markdown("""
     <div style="text-align: center; margin: 40px 0;">
         <h2 style="color: #d4af37; font-size: 2em;">📤 ENVIE SEU CONTRATO</h2>
@@ -756,15 +851,19 @@ def main():
     </div>
     """, unsafe_allow_html=True)
     
+    # File uploader com styling customizado
     col_upload = st.columns([1, 2, 1])[1]
     
     with col_upload:
+        # O próprio st.file_uploader já terá o estilo aplicado via CSS
         arquivo = st.file_uploader(
-            "",
+            "Selecione seu contrato de aluguel (PDF)",
             type=["pdf"],
-            label_visibility="collapsed",
             help="Arraste ou clique para selecionar seu contrato PDF"
         )
+    
+    # Inicializar sistema
+    auditoria = SistemaAuditoria100Efetivo()
     
     # Processar arquivo
     if arquivo:
@@ -970,32 +1069,34 @@ def main():
                     </div>
                     """, unsafe_allow_html=True)
     else:
-        # Tela inicial
+        # Mensagem adicional se nenhum arquivo for enviado
         st.markdown("""
-        <div class="upload-container fade-in">
-            <div style="font-size: 5em; color: #d4af37; margin-bottom: 20px;">📄</div>
-            <h3 style="color: #ffffff; margin: 20px 0; font-size: 1.8em;">ENVIE SEU CONTRATO DE ALUGUEL</h3>
-            <p style="color: #cccccc; font-size: 1.1em; max-width: 600px; margin: 0 auto 30px auto;">
-                Sistema 100% efetivo na detecção de cláusulas abusivas
-            </p>
+        <div style="text-align: center; margin: 40px 0; padding: 30px; background: rgba(20, 20, 20, 0.9); border-radius: 15px; border: 1px solid rgba(212, 175, 55, 0.3);">
+            <h3 style="color: #d4af37; font-size: 1.5em; margin-bottom: 20px;">📋 O QUE ANALISAMOS</h3>
             
-            <div style="display: flex; justify-content: center; gap: 20px; margin-top: 30px; flex-wrap: wrap;">
-                <div style="text-align: center; padding: 15px; border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 10px; background: rgba(212, 175, 55, 0.05);">
-                    <div style="font-size: 2em; color: #ff4444;">⚖️</div>
-                    <div style="color: #d4af37; font-weight: bold;">Detecção Crítica</div>
-                    <div style="color: #cccccc; font-size: 0.9em;">Cláusulas ilegais</div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 20px;">
+                <div style="text-align: center; padding: 20px; border: 1px solid rgba(212, 175, 55, 0.2); border-radius: 10px; background: rgba(30, 30, 30, 0.5);">
+                    <div style="font-size: 2em; color: #ff4444;">📈</div>
+                    <div style="color: #ffffff; font-weight: bold; margin: 10px 0;">Reajustes Abusivos</div>
+                    <div style="color: #cccccc; font-size: 0.9em;">Verificação de índices ilegais</div>
                 </div>
                 
-                <div style="text-align: center; padding: 15px; border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 10px; background: rgba(212, 175, 55, 0.05);">
-                    <div style="font-size: 2em; color: #ffaa44;">🔍</div>
-                    <div style="color: #d4af37; font-weight: bold;">Análise Completa</div>
-                    <div style="color: #cccccc; font-size: 0.9em;">Todos os artigos</div>
+                <div style="text-align: center; padding: 20px; border: 1px solid rgba(212, 175, 55, 0.2); border-radius: 10px; background: rgba(30, 30, 30, 0.5);">
+                    <div style="font-size: 2em; color: #ff4444;">🔒</div>
+                    <div style="color: #ffffff; font-weight: bold; margin: 10px 0;">Garantias Ilegais</div>
+                    <div style="color: #cccccc; font-size: 0.9em;">Fiador + caução simultâneos</div>
                 </div>
                 
-                <div style="text-align: center; padding: 15px; border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 10px; background: rgba(212, 175, 55, 0.05);">
-                    <div style="font-size: 2em; color: #00ff00;">✅</div>
-                    <div style="color: #d4af37; font-weight: bold;">Ações Práticas</div>
-                    <div style="color: #cccccc; font-size: 0.9em;">Como proceder</div>
+                <div style="text-align: center; padding: 20px; border: 1px solid rgba(212, 175, 55, 0.2); border-radius: 10px; background: rgba(30, 30, 30, 0.5);">
+                    <div style="font-size: 2em; color: #ff4444;">💰</div>
+                    <div style="color: #ffffff; font-weight: bold; margin: 10px 0;">Multas Abusivas</div>
+                    <div style="color: #cccccc; font-size: 0.9em;">Valores desproporcionais</div>
+                </div>
+                
+                <div style="text-align: center; padding: 20px; border: 1px solid rgba(212, 175, 55, 0.2); border-radius: 10px; background: rgba(30, 30, 30, 0.5);">
+                    <div style="font-size: 2em; color: #ff4444;">🏗️</div>
+                    <div style="color: #ffffff; font-weight: bold; margin: 10px 0;">Benfeitorias</div>
+                    <div style="color: #cccccc; font-size: 0.9em;">Direitos de indenização</div>
                 </div>
             </div>
         </div>
